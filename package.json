@@ -1,0 +1,36 @@
+{
+  "name": "startc-dynamic-cms",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node server/dev.js",
+    "dev:all": "node server/dev.js",
+    "dev:server": "node --no-warnings server/index.js",
+    "dev:client": "vite --config client/vite.config.js",
+    "build": "vite build --config client/vite.config.js",
+    "build:client": "npm run build",
+    "start": "node --no-warnings server/index.js",
+    "db:seed": "node --no-warnings server/seed.js",
+    "check": "node --check server/index.js && node --check server/db.js && node --check server/seed-data.js && npm run build"
+  },
+  "dependencies": {
+    "@vitejs/plugin-vue": "^6.0.0",
+    "bcryptjs": "^3.0.2",
+    "compression": "^1.8.1",
+    "cookie-parser": "^1.4.7",
+    "dotenv": "^16.5.0",
+    "express": "^5.1.0",
+    "helmet": "^8.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "multer": "^2.0.1",
+    "sanitize-html": "^2.17.0",
+    "sharp": "^0.35.1",
+    "vite": "^8.0.16",
+    "vue": "^3.5.17",
+    "vue-router": "^4.5.1"
+  },
+  "engines": {
+    "node": ">=22.5"
+  }
+}
