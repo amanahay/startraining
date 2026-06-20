@@ -1,0 +1,2 @@
+# startraining
+https://startraining.info
