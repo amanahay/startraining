@@ -184,6 +184,7 @@ body {
 .testimonials-section .text-white-50,
 .lead-section .text-white-50,
 .cta-section .text-white-50 { color: #475569; }
+.testimonials-section .section-lead { margin-inline: auto; }
 /* Landing defaults use a light theme. Only buttons/badges may intentionally
    keep white text; regular content must stay readable on every section. */
 .dynamic-section .text-white:not(.btn):not(.badge),
