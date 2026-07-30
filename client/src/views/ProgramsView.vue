@@ -112,7 +112,7 @@ onMounted(async () => {
                 <div class="program-card-actions">
                   <router-link :to="`/program/${program.slug}`" class="btn btn-sm btn-danger rounded-pill px-3">Detail</router-link>
                   <a :href="whatsapp(site.settings, program)" target="_blank" class="btn btn-sm btn-success rounded-pill px-3"><i class="bi bi-whatsapp"></i> Tanya</a>
-                  <a v-if="program.flyer_pdf_url" :href="program.flyer_pdf_url" target="_blank" download class="btn btn-sm btn-outline-danger rounded-pill px-3"><i class="bi bi-file-earmark-pdf"></i> Flyer</a>
+                  <a v-if="program.flyer_pdf_url" :href="program.flyer_pdf_url" target="_blank" class="btn btn-sm btn-outline-danger rounded-pill px-3"><i class="bi bi-file-earmark-pdf"></i> Buka Flyer</a>
                 </div>
               </div>
             </article>

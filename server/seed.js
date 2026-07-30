@@ -19,6 +19,35 @@ export function seedDatabase() {
   run(`UPDATE settings SET value=?, updated_at=CURRENT_TIMESTAMP WHERE key='logo_url' AND value IN ('""', 'null')`, [JSON.stringify('/Master-Logo-Star-1-2048x1011.png')]);
   run(`UPDATE settings SET value=?, updated_at=CURRENT_TIMESTAMP WHERE key='favicon_url' AND value IN ('""', 'null', '"/favicon-32x32.png"', '"/favicon-96x96.png"')`, [JSON.stringify('/favicon.svg')]);
   run("UPDATE navigation SET url='/testimonials' WHERE label='Testimoni' AND url='/#testimoni'");
+  const eventSection = seed.sections.find((item) => item[0] === 'events');
+  if (eventSection) run(`INSERT INTO sections (section_key,name,eyebrow,title,subtitle,content,config_json,is_visible,sort_order) VALUES (?,?,?,?,?,?,?,?,?) ON CONFLICT(section_key) DO NOTHING`, [...eventSection.slice(0,6), JSON.stringify(eventSection[6]), eventSection[7], eventSection[8]]);
+  // One-time copy migration: put every formerly hardcoded landing-page label
+  // into config_json without replacing an administrator's existing value.
+  if (!row("SELECT value FROM settings WHERE key='system_dynamic_landing_copy_20260728'")) {
+    for (const section of rows('SELECT section_key, config_json FROM sections')) {
+      let config = {};
+      try { config = JSON.parse(section.config_json || '{}'); } catch {}
+      const defaults = seed.sectionConfigDefaults[section.section_key] || {};
+      const nextConfig = { ...config };
+      for (const [key, value] of Object.entries(defaults)) {
+        if (nextConfig[key] === undefined || nextConfig[key] === null || nextConfig[key] === '') nextConfig[key] = value;
+      }
+      run('UPDATE sections SET config_json=?, updated_at=CURRENT_TIMESTAMP WHERE section_key=?', [JSON.stringify(nextConfig), section.section_key]);
+    }
+    run("INSERT INTO settings (key,value,group_name) VALUES ('system_dynamic_landing_copy_20260728','\"1\"','system')");
+  }
+  if (!row("SELECT value FROM settings WHERE key='system_dynamic_landing_copy_20260728b'")) {
+    const section = row("SELECT config_json FROM sections WHERE section_key='programs'");
+    if (section) {
+      let config = {};
+      try { config = JSON.parse(section.config_json || '{}'); } catch {}
+      if (!config.hero_display_label) {
+        config.hero_display_label = seed.sectionConfigDefaults.programs.hero_display_label;
+        run("UPDATE sections SET config_json=?, updated_at=CURRENT_TIMESTAMP WHERE section_key='programs'", [JSON.stringify(config)]);
+      }
+    }
+    run("INSERT INTO settings (key,value,group_name) VALUES ('system_dynamic_landing_copy_20260728b','\"1\"','system')");
+  }
   if (!row("SELECT value FROM settings WHERE key='system_ui_refresh_20260619'")) {
     const whiteSections = new Set(['clients', 'programs', 'trainers', 'galleries', 'posts', 'faqs']);
     for (const section of rows('SELECT section_key, config_json FROM sections')) {
@@ -122,6 +151,14 @@ export function seedDatabase() {
     const fields = Object.keys(seed.programPage);
     run(`INSERT INTO program_pages (${fields.join(',')}) VALUES (${fields.map(() => '?').join(',')})`, fields.map((field) => seed.programPage[field]));
   }
+  if (row('SELECT COUNT(*) count FROM consultation_pages').count === 0) {
+    const fields = Object.keys(seed.consultationPage);
+    run(`INSERT INTO consultation_pages (${fields.join(',')}) VALUES (${fields.map(() => '?').join(',')})`, fields.map((field) => seed.consultationPage[field]));
+  }
+  if (row('SELECT COUNT(*) count FROM client_pages').count === 0) { const fields = Object.keys(seed.clientPage); run(`INSERT INTO client_pages (${fields.join(',')}) VALUES (${fields.map(() => '?').join(',')})`, fields.map((field) => seed.clientPage[field])); }
+  if (row('SELECT COUNT(*) count FROM event_pages').count === 0) { const fields = Object.keys(seed.eventPage); run(`INSERT INTO event_pages (${fields.join(',')}) VALUES (${fields.map(() => '?').join(',')})`, fields.map((field) => seed.eventPage[field])); }
+  if (row('SELECT COUNT(*) count FROM proposal_pages').count === 0) { const fields = Object.keys(seed.proposalPage); run(`INSERT INTO proposal_pages (${fields.join(',')}) VALUES (${fields.map(() => '?').join(',')})`, fields.map((field) => seed.proposalPage[field])); }
+  if (row('SELECT COUNT(*) count FROM proposal_packages').count === 0) { const statement = db.prepare('INSERT INTO proposal_packages (title,description,price_label,features,button_label,is_featured,is_published,sort_order) VALUES (?,?,?,?,?,?,?,?)'); seed.proposalPackages.forEach((item) => statement.run(...item)); }
   if (row('SELECT COUNT(*) count FROM social_proofs').count === 0 && row('SELECT COUNT(*) count FROM programs').count > 0) {
     const statement = db.prepare(`INSERT INTO social_proofs
       (customer_name,action_text,program_id,program_title,message_text,occurred_at,display_seconds,sort_order)
@@ -136,8 +173,22 @@ export function seedDatabase() {
     run("UPDATE social_proofs SET occurred_at=datetime('now','-2 days') WHERE sort_order=40");
     run("UPDATE social_proofs SET occurred_at=datetime('now','-3 days') WHERE sort_order=50");
   }
-  if (!row("SELECT id FROM navigation WHERE url='/services' OR label='Layanan'")) {
-    run("INSERT INTO navigation (label,url,sort_order) VALUES ('Layanan','/services',35)");
+  const standardNavs = [
+    ['Tentang', '/about', 20],
+    ['Layanan', '/services', 30],
+    ['Program', '/programs', 40],
+    ['Galeri', '/gallery', 50],
+    ['Testimoni', '/testimonials', 60],
+    ['Blog', '/blog', 70],
+    ['Request Konsultasi', '/request-konsultasi', 75],
+    ['Klien', '/klien', 76],
+    ['Event', '/event', 77],
+    ['Penawaran', '/penawaran', 80]
+  ];
+  for (const [label, url, sort] of standardNavs) {
+    if (!row("SELECT id FROM navigation WHERE url=?", [url])) {
+      run("INSERT INTO navigation (label,url,location,target,is_published,sort_order) VALUES (?,?,'header','_self',1,?)", [label, url, sort]);
+    }
   }
   if (row("SELECT value FROM settings WHERE key='system_seed_version'")) {
     return { seeded: false };
@@ -185,6 +236,9 @@ export function seedDatabase() {
     seedIfEmpty('service_pages', `INSERT INTO service_pages (${Object.keys(seed.servicePage).join(',')}) VALUES (${Object.keys(seed.servicePage).map(() => '?').join(',')})`, [seed.servicePage], (item) => Object.keys(seed.servicePage).map((field) => item[field]));
     seedIfEmpty('service_items', 'INSERT INTO service_items (title,description,icon,image_url,button_label,button_url,sort_order) VALUES (?,?,?,?,?,?,?)', seed.serviceItems);
     seedIfEmpty('program_pages', `INSERT INTO program_pages (${Object.keys(seed.programPage).join(',')}) VALUES (${Object.keys(seed.programPage).map(() => '?').join(',')})`, [seed.programPage], (item) => Object.keys(seed.programPage).map((field) => item[field]));
+    seedIfEmpty('consultation_pages', `INSERT INTO consultation_pages (${Object.keys(seed.consultationPage).join(',')}) VALUES (${Object.keys(seed.consultationPage).map(() => '?').join(',')})`, [seed.consultationPage], (item) => Object.keys(seed.consultationPage).map((field) => item[field]));
+    seedIfEmpty('client_pages', `INSERT INTO client_pages (${Object.keys(seed.clientPage).join(',')}) VALUES (${Object.keys(seed.clientPage).map(() => '?').join(',')})`, [seed.clientPage], (item) => Object.keys(seed.clientPage).map((field) => item[field]));
+    seedIfEmpty('event_pages', `INSERT INTO event_pages (${Object.keys(seed.eventPage).join(',')}) VALUES (${Object.keys(seed.eventPage).map(() => '?').join(',')})`, [seed.eventPage], (item) => Object.keys(seed.eventPage).map((field) => item[field]));
     if (row('SELECT COUNT(*) count FROM social_proofs').count === 0) {
       const socialStatement = db.prepare(`INSERT INTO social_proofs
         (customer_name,action_text,program_id,program_title,message_text,occurred_at,display_seconds,sort_order)

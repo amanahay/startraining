@@ -1,0 +1,10 @@
+<script setup>
+import { onMounted, ref } from 'vue';
+import { api } from '../api.js';
+import PublicPageShell from '../components/PublicPageShell.vue';
+const data = ref(null); const currentPage = ref(1);
+async function load(page = 1) { data.value = await api(`/public/clients-page?page=${page}&limit=24`); currentPage.value = page; window.scrollTo({ top: 0, behavior: 'smooth' }); }
+onMounted(() => load());
+</script>
+<template><PublicPageShell><main v-if="data" class="page-main"><div class="container"><header class="text-center mb-5"><span class="section-eyebrow">{{ data.page.eyebrow }}</span><h1 class="section-title">{{ data.page.title }}</h1><p class="section-lead mx-auto mt-3">{{ data.page.subtitle }}</p></header><div class="clients-page-grid"><a v-for="client in data.clients" :key="client.id" :href="client.website_url || undefined" :target="client.website_url ? '_blank' : undefined"><img :src="client.logo_url" :alt="client.name" loading="lazy"></a></div><nav v-if="data.pagination.total > data.pagination.limit" class="client-pagination"><button :disabled="currentPage===1" @click="load(currentPage-1)">Sebelumnya</button><span>Halaman {{currentPage}}</span><button :disabled="!data.pagination.has_more" @click="load(currentPage+1)">Berikutnya</button></nav></div></main><div v-else class="loading-screen"><div class="spinner-border text-danger"></div></div></PublicPageShell></template>
+<style scoped>.section-lead{color:#172033!important}.clients-page-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:1rem}.clients-page-grid a{height:110px;padding:1rem;border:1px solid #e5e7eb;border-radius:14px;background:#fff;display:grid;place-items:center}.clients-page-grid img{max-width:100%;max-height:76px;object-fit:contain}.client-pagination{display:flex;justify-content:center;align-items:center;gap:1rem;margin-top:2rem}.client-pagination button{border:1px solid #c41e3a;background:#fff;color:#9f1239;border-radius:999px;padding:.55rem 1rem;font-weight:800}.client-pagination button:disabled{opacity:.45}</style>

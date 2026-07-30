@@ -2,6 +2,7 @@
 import { computed, onMounted, ref } from 'vue';
 import { useRoute } from 'vue-router';
 import { api } from '../api.js';
+import { useCmsSync } from '../cmsSync.js';
 import PublicHeader from './PublicHeader.vue';
 import PublicFooter from './PublicFooter.vue';
 import SocialProofToast from './SocialProofToast.vue';
@@ -11,7 +12,14 @@ const route = useRoute();
 const site = ref(null);
 const hideSocialProof = computed(() => /^\/program\/[^/]+\/?$/.test(route.path));
 
-onMounted(async () => { site.value = await api('/public/bootstrap'); });
+async function fetchSiteData() {
+  try {
+    site.value = await api('/public/bootstrap');
+  } catch {}
+}
+
+onMounted(fetchSiteData);
+useCmsSync(fetchSiteData);
 </script>
 
 <template>

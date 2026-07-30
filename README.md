@@ -39,9 +39,9 @@ npm run db:seed
 npm run dev
 ```
 
-- Website Vite: `http://localhost:5173`
+- Website Vite: `http://localhost:18473`
 - API: `http://localhost:3100`
-- Admin: `http://localhost:5173/login`
+- Admin: `http://localhost:18473/login`
 
 Login awal:
 

@@ -1,6 +1,7 @@
 <script setup>
-import { computed, onMounted, onUnmounted, ref } from 'vue';
+import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue';
 import { api } from '../api.js';
+import { useCmsSync } from '../cmsSync.js';
 import PublicHeader from '../components/PublicHeader.vue';
 import PublicFooter from '../components/PublicFooter.vue';
 import SectionDecor from '../components/SectionDecor.vue';
@@ -20,6 +21,8 @@ const trainerTrack = ref(null);
 const touchStartX = ref(0);
 let heroTimer = null;
 let trainerTimer = null;
+let scrollSaveTimer = null;
+const landingScrollKey = 'startc:landing-scroll-position';
 const lead = ref({ name: '', whatsapp: '', company: '', position: '', program: '', participants: '1–20 orang', timeline: 'Masih eksplorasi', message: '', ref_code: new URLSearchParams(location.search).get('ref') || '' });
 
 const settings = computed(() => data.value.settings || {});
@@ -33,11 +36,13 @@ const filteredPrograms = computed(() => {
 });
 const heroPrograms = computed(() => (content.value.programs || []).filter((program) => Number(program.hero_featured || program.is_featured || 0)).slice(0, 6));
 const currentHeroProgram = computed(() => heroPrograms.value[activeHeroProgram.value % Math.max(1, heroPrograms.value.length)]);
+function landingClients(section) { const items = [...(content.value.clients || [])]; const mode = section.config?.sort_mode || 'latest'; if (mode === 'random') items.sort(() => Math.random() - .5); else if (mode === 'latest') items.sort((a,b) => new Date(b.created_at || 0) - new Date(a.created_at || 0)); return items.slice(0, Math.max(1, Number(section.config?.display_limit || 12))); }
 
 function sectionClass(section) {
   const key = section.section_key;
   const base = {
     hero: 'hero-section', stats: 'stats-section', clients: 'marquee-section', programs: 'programs-section',
+    events: 'events-section',
     features: 'why-section', trainers: 'trainer-section', galleries: 'gallery-section',
     testimonials: 'testimonials-section', posts: 'articles-section', partners: 'partner-section',
     contact: 'lead-section', faqs: 'faq-section', cta: 'cta-section'
@@ -47,17 +52,28 @@ function sectionClass(section) {
     'has-aurora': style.aurora_enabled !== 0,
     'has-glow': style.glow_enabled !== 0,
     'has-particles': section.section_key === 'hero' ? style.particles_enabled !== 0 : Boolean(style.particles_enabled),
-    'has-custom-align': Boolean(section.config?.style?.text_align),
-    'has-custom-text-color': Boolean(section.config?.style?.text_color),
-    'has-custom-heading-color': Boolean(section.config?.style?.heading_color),
-    'has-custom-font': Boolean(section.config?.style?.font_family),
-    'has-padding-desktop': section.config?.style?.padding_desktop !== '' && section.config?.style?.padding_desktop != null,
-    'has-padding-mobile': section.config?.style?.padding_mobile !== '' && section.config?.style?.padding_mobile != null,
-    'has-title-size-desktop': Boolean(section.config?.style?.title_size_desktop),
-    'has-title-size-mobile': Boolean(section.config?.style?.title_size_mobile),
-    'has-text-size-desktop': Boolean(section.config?.style?.text_size_desktop),
-    'has-text-size-mobile': Boolean(section.config?.style?.text_size_mobile),
-    'has-parallax': Boolean(section.config?.style?.parallax_enabled && section.config?.style?.parallax_image_url)
+    'has-custom-align': Boolean(style.text_align),
+    'has-custom-eyebrow-color': Boolean(style.eyebrow_color),
+    'has-custom-eyebrow-font': Boolean(style.eyebrow_font_family),
+    'has-custom-eyebrow-size-desktop': Boolean(style.eyebrow_size_desktop),
+    'has-custom-eyebrow-size-mobile': Boolean(style.eyebrow_size_mobile),
+    'has-custom-heading-color': Boolean(style.heading_color),
+    'has-custom-title-font': Boolean(style.title_font_family),
+    'has-custom-title-size-desktop': Boolean(style.title_size_desktop),
+    'has-custom-title-size-mobile': Boolean(style.title_size_mobile),
+    'has-custom-subtitle-color': Boolean(style.text_color),
+    'has-custom-subtitle-font': Boolean(style.subtitle_font_family),
+    'has-custom-text-size-desktop': Boolean(style.text_size_desktop),
+    'has-custom-text-size-mobile': Boolean(style.text_size_mobile),
+    'has-custom-action-button': Boolean(style.button_variant || style.button_background_color || style.button_text_color || style.button_border_color || style.button_font_family || style.button_font_size_desktop || style.button_font_size_mobile),
+    'has-button-solid': style.button_variant === 'solid',
+    'has-button-outline': style.button_variant === 'outline',
+    'has-padding-desktop': style.padding_desktop !== '' && style.padding_desktop != null,
+    'has-padding-mobile': style.padding_mobile !== '' && style.padding_mobile != null,
+    'has-parallax': Boolean(style.parallax_enabled && style.parallax_image_url)
+    ,'has-eyebrow-spacing': ['eyebrow_margin_desktop','eyebrow_margin_mobile','eyebrow_padding_desktop','eyebrow_padding_mobile'].some((key) => style[key] !== '' && style[key] != null)
+    ,'has-title-spacing': ['title_margin_desktop','title_margin_mobile','title_padding_desktop','title_padding_mobile'].some((key) => style[key] !== '' && style[key] != null)
+    ,'has-subtitle-spacing': ['subtitle_margin_desktop','subtitle_margin_mobile','subtitle_padding_desktop','subtitle_padding_mobile'].some((key) => style[key] !== '' && style[key] != null)
   }];
 }
 
@@ -71,24 +87,59 @@ function rgba(hex = '#000000', opacity = 0) {
 function sectionStyle(section) {
   const style = section.config?.style || {};
   const css = {};
+
   if (style.background_color) css.background = style.background_color;
-  if (style.aurora_gradient) css['--section-aurora'] = style.aurora_gradient;
-  if (style.glow_color) css['--section-glow-color'] = style.glow_color;
-  if (style.particle_color) css['--section-particle-color'] = style.particle_color;
-  if (style.text_color) css['--section-text-color'] = style.text_color;
-  if (style.heading_color) css['--section-heading-color'] = style.heading_color;
   if (style.font_family) css['--section-font-family'] = `"${style.font_family}", sans-serif`;
   if (style.text_align) css['--section-text-align'] = style.text_align;
+
+  // Eyebrow overrides
+  if (style.eyebrow_color) css['--section-eyebrow-color'] = style.eyebrow_color;
+  if (style.eyebrow_font_family) css['--section-eyebrow-font'] = `"${style.eyebrow_font_family}", sans-serif`;
+  if (style.eyebrow_size_desktop) css['--section-eyebrow-size-desktop'] = `${style.eyebrow_size_desktop}px`;
+  if (style.eyebrow_size_mobile) css['--section-eyebrow-size-mobile'] = `${style.eyebrow_size_mobile}px`;
+
+  // Title / Heading overrides
+  if (style.heading_color) css['--section-heading-color'] = style.heading_color;
+  if (style.title_font_family) css['--section-title-font'] = `"${style.title_font_family}", sans-serif`;
   if (style.title_size_desktop) css['--section-title-desktop'] = `${style.title_size_desktop}px`;
   if (style.title_size_mobile) css['--section-title-mobile'] = `${style.title_size_mobile}px`;
+
+  // Subtitle / Text overrides
+  if (style.text_color) css['--section-subtitle-color'] = style.text_color;
+  if (style.subtitle_font_family) css['--section-subtitle-font'] = `"${style.subtitle_font_family}", sans-serif`;
   if (style.text_size_desktop) css['--section-text-desktop'] = `${style.text_size_desktop}px`;
   if (style.text_size_mobile) css['--section-text-mobile'] = `${style.text_size_mobile}px`;
+
+  // Per-field vertical spacing (label, title, description)
+  for (const field of ['eyebrow', 'title', 'subtitle']) {
+    for (const device of ['desktop', 'mobile']) {
+      const margin = style[`${field}_margin_${device}`];
+      const padding = style[`${field}_padding_${device}`];
+      if (margin !== '' && margin != null) css[`--section-${field}-margin-${device}`] = `${margin}px`;
+      if (padding !== '' && padding != null) css[`--section-${field}-padding-${device}`] = `${padding}px`;
+    }
+  }
+
+  // Section action button overrides
+  if (style.button_background_color) css['--section-button-bg'] = style.button_background_color;
+  if (style.button_text_color) css['--section-button-text'] = style.button_text_color;
+  if (style.button_border_color) css['--section-button-border'] = style.button_border_color;
+  if (style.button_font_family) css['--section-button-font'] = `"${style.button_font_family}", sans-serif`;
+  if (style.button_font_size_desktop) css['--section-button-size-desktop'] = `${style.button_font_size_desktop}px`;
+  if (style.button_font_size_mobile) css['--section-button-size-mobile'] = `${style.button_font_size_mobile}px`;
+
+  // Padding & Margin
   if (style.padding_desktop !== '' && style.padding_desktop != null) css['--section-padding-desktop'] = `${style.padding_desktop}px`;
   if (style.padding_mobile !== '' && style.padding_mobile != null) css['--section-padding-mobile'] = `${style.padding_mobile}px`;
   if (style.margin_top_desktop !== '' && style.margin_top_desktop != null) css['--section-margin-top-desktop'] = `${style.margin_top_desktop}px`;
   if (style.margin_bottom_desktop !== '' && style.margin_bottom_desktop != null) css['--section-margin-bottom-desktop'] = `${style.margin_bottom_desktop}px`;
   if (style.margin_top_mobile !== '' && style.margin_top_mobile != null) css['--section-margin-top-mobile'] = `${style.margin_top_mobile}px`;
   if (style.margin_bottom_mobile !== '' && style.margin_bottom_mobile != null) css['--section-margin-bottom-mobile'] = `${style.margin_bottom_mobile}px`;
+
+  // Effects & Dividers
+  if (style.aurora_gradient) css['--section-aurora'] = style.aurora_gradient;
+  if (style.glow_color) css['--section-glow-color'] = style.glow_color;
+  if (style.particle_color) css['--section-particle-color'] = style.particle_color;
   if (style.divider_color) css['--section-divider-color'] = style.divider_color;
   if (style.divider_height_desktop) css['--section-divider-height-desktop'] = `${style.divider_height_desktop}px`;
   if (style.divider_height_mobile) css['--section-divider-height-mobile'] = `${style.divider_height_mobile}px`;
@@ -162,6 +213,42 @@ function scrollTrainers(direction = 1) {
   el.scrollBy({ left: distance * direction, behavior: 'smooth' });
 }
 
+function saveLandingScroll() {
+  window.clearTimeout(scrollSaveTimer);
+  scrollSaveTimer = window.setTimeout(() => {
+    const scrollY = window.scrollY;
+    const visibleSection = [...document.querySelectorAll('.public-main .dynamic-section[id]')]
+      .filter((element) => element.getBoundingClientRect().top <= 80)
+      .at(-1);
+    const sectionTop = visibleSection ? visibleSection.getBoundingClientRect().top + scrollY : 0;
+    const saved = {
+      y: scrollY,
+      sectionId: visibleSection?.id || '',
+      offset: visibleSection ? Math.max(0, scrollY - sectionTop) : 0
+    };
+    sessionStorage.setItem(landingScrollKey, JSON.stringify(saved));
+    history.replaceState({ ...(history.state || {}), landingSection: saved.sectionId, landingOffset: saved.offset }, '', `${location.pathname}${location.search}`);
+  }, 120);
+}
+
+function restoreLandingScroll() {
+  // A URL anchor remains the explicit navigation choice; otherwise restore the
+  // reader's exact position from this browser tab after a reload.
+  if (location.hash) return;
+  try {
+    const stored = JSON.parse(sessionStorage.getItem(landingScrollKey) || 'null');
+    const saved = history.state?.landingSection
+      ? { sectionId: history.state.landingSection, offset: history.state.landingOffset || 0, y: stored?.y || 0 }
+      : stored;
+    if (!saved || (!saved.sectionId && !Number.isFinite(saved.y))) return;
+    const section = saved.sectionId ? document.getElementById(saved.sectionId) : null;
+    const top = section
+      ? section.getBoundingClientRect().top + window.scrollY + Number(saved.offset || 0)
+      : Number(saved.y || 0);
+    window.scrollTo({ top, behavior: 'auto' });
+  } catch {}
+}
+
 async function submitLead() {
   sending.value = true;
   notice.value = '';
@@ -176,22 +263,37 @@ async function submitLead() {
   }
 }
 
+async function loadContentData() {
+  try {
+    const res = await api('/public/bootstrap');
+    data.value = res;
+    const s = settings.value;
+    document.documentElement.style.setProperty('--clr-red-dark', s.primary_color || '#8B0000');
+    document.documentElement.style.setProperty('--clr-red', s.secondary_color || '#C41E3A');
+    document.documentElement.style.setProperty('--clr-red-light', s.accent_color || '#F4A7B9');
+    document.documentElement.style.setProperty('--clr-navy', s.dark_color || '#1A1A2E');
+    document.documentElement.style.setProperty('--font-display', `"${s.font_display || 'Manrope'}", system-ui, sans-serif`);
+    document.documentElement.style.setProperty('--font-body', `"${s.font_body || 'Manrope'}", system-ui, sans-serif`);
+  } catch {}
+}
+
 onMounted(async () => {
-  data.value = await api('/public/bootstrap');
-  const s = settings.value;
-  document.documentElement.style.setProperty('--clr-red-dark', s.primary_color || '#8B0000');
-  document.documentElement.style.setProperty('--clr-red', s.secondary_color || '#C41E3A');
-  document.documentElement.style.setProperty('--clr-red-light', s.accent_color || '#F4A7B9');
-  document.documentElement.style.setProperty('--clr-navy', s.dark_color || '#1A1A2E');
-  document.documentElement.style.setProperty('--font-display', `"${s.font_display || 'Manrope'}", system-ui, sans-serif`);
-  document.documentElement.style.setProperty('--font-body', `"${s.font_body || 'Manrope'}", system-ui, sans-serif`);
+  await loadContentData();
   loading.value = false;
+  await nextTick();
+  requestAnimationFrame(() => requestAnimationFrame(restoreLandingScroll));
+  window.addEventListener('scroll', saveLandingScroll, { passive: true });
+  window.addEventListener('popstate', restoreLandingScroll);
   heroTimer = window.setInterval(nextHeroProgram, 6500);
   trainerTimer = window.setInterval(() => scrollTrainers(1), 5200);
 });
+useCmsSync(loadContentData);
 onUnmounted(() => {
   if (heroTimer) window.clearInterval(heroTimer);
   if (trainerTimer) window.clearInterval(trainerTimer);
+  window.clearTimeout(scrollSaveTimer);
+  window.removeEventListener('scroll', saveLandingScroll);
+  window.removeEventListener('popstate', restoreLandingScroll);
 });
 </script>
 
@@ -215,7 +317,7 @@ onUnmounted(() => {
               <div class="hero-cta-group">
                 <a :href="section.config.primary_url" class="btn btn-lg hero-primary">{{ section.config.primary_button }}</a>
                 <a :href="whatsapp()" target="_blank" class="btn btn-lg hero-secondary"><i class="bi bi-whatsapp me-2"></i>{{ section.config.secondary_button }}</a>
-                <a v-if="settings.flyer_pdf_url" :href="settings.flyer_pdf_url" target="_blank" download class="btn btn-lg hero-secondary"><i class="bi bi-file-earmark-pdf me-2"></i>{{ settings.flyer_button_label || 'Download Flyer' }}</a>
+                <a v-if="settings.flyer_pdf_url" :href="settings.flyer_pdf_url" target="_blank" class="btn btn-lg hero-secondary"><i class="bi bi-file-earmark-pdf me-2"></i>{{ settings.flyer_button_label || 'Buka Flyer' }}</a>
               </div>
               <router-link v-if="currentHeroProgram" :to="`/program/${currentHeroProgram.slug}`" class="hero-program-mobile-card">
                 <img v-if="currentHeroProgram.image_url" :src="currentHeroProgram.image_url" :alt="currentHeroProgram.title">
@@ -250,12 +352,12 @@ onUnmounted(() => {
                     <strong>{{ formatPrice(currentHeroProgram.price_discount || currentHeroProgram.price_regular) }}</strong>
                   </div>
                   <div class="hero-program-actions">
-                    <router-link :to="`/program/${currentHeroProgram.slug}`" class="btn btn-danger rounded-pill px-4">Detail Program</router-link>
-                    <a :href="whatsapp(`Halo, saya ingin info program ${currentHeroProgram.title}.`)" target="_blank" class="btn btn-outline-danger rounded-pill px-4">Tanya</a>
+                    <router-link :to="`/program/${currentHeroProgram.slug}`" class="btn btn-danger rounded-pill px-4">{{ section.config.hero_detail_label || 'Detail Program' }}</router-link>
+                    <a :href="whatsapp(`Halo, saya ingin info program ${currentHeroProgram.title}.`)" target="_blank" class="btn btn-outline-danger rounded-pill px-4">{{ section.config.hero_inquiry_label || 'Tanya via WhatsApp' }}</a>
                   </div>
                 </div>
                 <div v-if="heroPrograms.length > 1" class="hero-program-dots">
-                  <button v-for="(program, index) in heroPrograms" :key="program.id" type="button" :class="{ active: index === activeHeroProgram }" :aria-label="`Tampilkan ${program.title}`" @click="selectHeroProgram(index)"></button>
+                  <button v-for="(program, index) in heroPrograms" :key="program.id" type="button" :class="{ active: index === activeHeroProgram }" :aria-label="`${section.config.hero_display_label} ${program.title}`" @click="selectHeroProgram(index)"></button>
                 </div>
               </article>
               <img v-else-if="section.config.image_url" :src="section.config.image_url" :alt="section.title" class="hero-main-image">
@@ -285,20 +387,25 @@ onUnmounted(() => {
             </div>
           </div>
           <div class="section-action">
-            <router-link to="/about" class="btn btn-outline-danger rounded-pill px-4">{{ section.config.about_button_label || 'Selengkapnya Tentang Kami' }} <i class="bi bi-arrow-right ms-2"></i></router-link>
+            <router-link :to="section.config.about_button_url" class="btn btn-outline-danger rounded-pill px-4 section-action-button">{{ section.config.about_button_label }} <i class="bi bi-arrow-right ms-2"></i></router-link>
           </div>
         </div>
       </section>
 
-      <section v-else-if="section.section_key === 'clients'" :class="sectionClass(section)" :style="sectionStyle(section)">
+      <section v-else-if="section.section_key === 'clients'" :id="sectionId(section.section_key)" :class="sectionClass(section)" :style="sectionStyle(section)">
         <SectionDecor :section="section" />
-        <div class="container"><p class="marquee-label">{{ section.title }}</p></div>
+        <div class="container text-center mb-4">
+          <span v-if="section.eyebrow" class="section-eyebrow">{{ section.eyebrow }}</span>
+          <p class="marquee-label mb-1">{{ section.title }}</p>
+          <p v-if="section.subtitle" class="section-lead mx-auto">{{ section.subtitle }}</p>
+        </div>
         <div class="container">
           <div class="client-logo-grid" :style="{ '--client-scroll-height': `${section.config.scroll_height || 240}px` }">
-            <a v-for="client in content.clients" :key="client.id" :href="client.website_url || undefined" :target="client.website_url ? '_blank' : undefined" class="client-logo-item">
+            <a v-for="client in landingClients(section)" :key="client.id" :href="client.website_url || undefined" :target="client.website_url ? '_blank' : undefined" class="client-logo-item">
               <img :src="client.logo_url" :alt="client.name" loading="lazy">
             </a>
           </div>
+          <div class="section-action"><router-link class="btn btn-outline-danger rounded-pill px-4 section-action-button" :to="section.config.action_button_url">{{ section.config.action_button_label }} <i class="bi bi-arrow-right ms-2"></i></router-link></div>
         </div>
       </section>
 
@@ -316,7 +423,7 @@ onUnmounted(() => {
             </div>
             <div class="col-lg-5">
               <div class="filter-bar justify-content-lg-end">
-                <button v-for="category in programCategories" :key="category" class="filter-btn text-capitalize" :class="{ active: activeProgram === category }" @click="activeProgram = category">{{ category === 'all' ? 'Semua' : category }}</button>
+                <button v-for="category in programCategories" :key="category" class="filter-btn text-capitalize" :class="{ active: activeProgram === category }" @click="activeProgram = category">{{ category === 'all' ? section.config.filter_all_label : category }}</button>
               </div>
             </div>
           </div>
@@ -338,19 +445,20 @@ onUnmounted(() => {
                     <span v-if="program.voucher_code">{{ program.voucher_code }}</span>
                   </div>
                   <div class="program-card-actions">
-                    <router-link :to="`/program/${program.slug}`" class="btn btn-sm btn-danger rounded-pill px-3">Detail</router-link>
-                    <a :href="whatsapp(`Halo, saya ingin info program ${program.title}.`)" target="_blank" class="btn btn-sm btn-success rounded-pill px-3"><i class="bi bi-whatsapp"></i> Tanya</a>
-                    <a v-if="program.flyer_pdf_url" :href="program.flyer_pdf_url" target="_blank" download class="btn btn-sm btn-outline-danger rounded-pill px-3"><i class="bi bi-file-earmark-pdf"></i> Flyer</a>
+                    <router-link :to="`/program/${program.slug}`" class="btn btn-sm btn-danger rounded-pill px-3">{{ section.config.card_detail_label }}</router-link>
+                    <a :href="whatsapp(`Halo, saya ingin info program ${program.title}.`)" target="_blank" class="btn btn-sm btn-success rounded-pill px-3"><i class="bi bi-whatsapp"></i> {{ section.config.card_inquiry_label }}</a>
+                    <a v-if="program.flyer_pdf_url" :href="program.flyer_pdf_url" target="_blank" class="btn btn-sm btn-outline-danger rounded-pill px-3"><i class="bi bi-file-earmark-pdf"></i> {{ section.config.card_flyer_label || 'Buka Flyer' }}</a>
                   </div>
                 </div>
               </article>
             </div>
           </div>
           <div class="section-action">
-            <router-link to="/programs" class="btn btn-outline-danger rounded-pill px-5">Lihat Semua Program <i class="bi bi-arrow-right ms-2"></i></router-link>
+            <router-link :to="section.config.action_button_url" class="btn btn-outline-danger rounded-pill px-5 section-action-button">{{ section.config.action_button_label }} <i class="bi bi-arrow-right ms-2"></i></router-link>
           </div>
         </div>
       </section>
+      <section v-else-if="section.section_key === 'events'" :id="sectionId(section.section_key)" :class="sectionClass(section)" :style="sectionStyle(section)"><SectionDecor :section="section"/><div class="container"><div class="text-center mb-4"><span class="section-eyebrow">{{section.eyebrow}}</span><h2 class="section-title">{{section.title}}</h2><p class="section-lead mx-auto">{{section.subtitle}}</p></div><div class="row g-4"><div v-for="event in content.events" :key="event.id" class="col-md-6 col-lg-4"><router-link :to="`/event/${event.slug}`" class="event-slide"><img v-if="event.image_url" :src="event.image_url" :alt="event.title"><strong>{{event.title}}</strong><small>{{event.location}}</small></router-link></div></div><div class="section-action"><router-link :to="section.config.action_button_url" class="btn btn-outline-danger rounded-pill section-action-button">{{section.config.action_button_label}}</router-link></div></div></section>
 
       <section v-else-if="section.section_key === 'features'" :id="sectionId(section.section_key)" :class="sectionClass(section)" :style="sectionStyle(section)">
         <SectionDecor :section="section" />
@@ -360,10 +468,10 @@ onUnmounted(() => {
         <div class="container">
           <div class="row align-items-center g-5">
             <div class="col-lg-5">
-              <span class="section-eyebrow text-rose">{{ section.eyebrow }}</span>
-              <h2 class="section-title text-white">{{ section.title }}</h2>
-              <p class="text-white-50 mt-3">{{ section.subtitle }}</p>
-              <a href="#kontak" class="btn btn-danger rounded-pill mt-4 px-4">Konsultasi Gratis <i class="bi bi-arrow-right ms-2"></i></a>
+              <span class="section-eyebrow">{{ section.eyebrow }}</span>
+              <h2 class="section-title">{{ section.title }}</h2>
+              <p class="section-lead mt-3">{{ section.subtitle }}</p>
+              <a :href="section.config.action_button_url" class="btn btn-danger rounded-pill mt-4 px-4 section-action-button">{{ section.config.action_button_label }} <i class="bi bi-arrow-right ms-2"></i></a>
             </div>
             <div class="col-lg-7">
               <div class="row g-3">
@@ -388,7 +496,7 @@ onUnmounted(() => {
             <p class="section-lead mx-auto mt-3">{{ section.subtitle }}</p>
           </div>
           <div class="trainer-carousel-shell">
-            <button type="button" class="slider-nav slider-prev" aria-label="Trainer sebelumnya" @click="scrollTrainers(-1)"><i class="bi bi-chevron-left"></i></button>
+            <button type="button" class="slider-nav slider-prev" :aria-label="section.config.previous_label" @click="scrollTrainers(-1)"><i class="bi bi-chevron-left"></i></button>
             <div ref="trainerTrack" class="trainer-carousel-track">
               <div v-for="trainer in content.trainers" :key="trainer.id" class="trainer-slide">
                 <div class="trainer-card">
@@ -403,7 +511,7 @@ onUnmounted(() => {
                 </div>
               </div>
             </div>
-            <button type="button" class="slider-nav slider-next" aria-label="Trainer berikutnya" @click="scrollTrainers(1)"><i class="bi bi-chevron-right"></i></button>
+            <button type="button" class="slider-nav slider-next" :aria-label="section.config.next_label" @click="scrollTrainers(1)"><i class="bi bi-chevron-right"></i></button>
           </div>
         </div>
       </section>
@@ -422,7 +530,7 @@ onUnmounted(() => {
               <div v-else class="gallery-placeholder"><i class="bi bi-images"></i><small>{{ gallery.title }}</small></div>
             </router-link>
           </div>
-          <div class="section-action"><router-link class="btn btn-outline-danger rounded-pill px-4" to="/gallery">Lihat Semua Foto <i class="bi bi-arrow-right ms-2"></i></router-link></div>
+          <div class="section-action"><router-link class="btn btn-outline-danger rounded-pill px-4 section-action-button" :to="section.config.action_button_url">{{ section.config.action_button_label }} <i class="bi bi-arrow-right ms-2"></i></router-link></div>
         </div>
       </section>
 
@@ -433,15 +541,14 @@ onUnmounted(() => {
         </div>
         <div class="container">
           <div class="text-center mb-5">
-            <span class="section-eyebrow text-rose">{{ section.eyebrow }}</span>
-            <h2 class="section-title text-white">{{ section.title }}</h2>
-            <p class="text-white-50">{{ section.subtitle }}</p>
+            <span class="section-eyebrow">{{ section.eyebrow }}</span>
+            <h2 class="section-title">{{ section.title }}</h2>
+            <p class="section-lead">{{ section.subtitle }}</p>
           </div>
           <div class="testimonials-track">
             <article v-for="item in content.testimonials" :key="item.id" class="testimonial-card">
               <div class="testimonial-stars">{{ '★'.repeat(item.rating) }}</div>
-              <div class="testimonial-quote">"</div>
-              <p class="testimonial-text">{{ item.quote }}</p>
+              <p class="testimonial-text">“{{ item.quote }}”</p>
               <div class="testimonial-author">
                 <img v-if="item.avatar_url" class="testimonial-avatar" :src="item.avatar_url" :alt="item.name">
                 <div v-else class="testimonial-avatar">{{ item.name.charAt(0) }}</div>
@@ -449,7 +556,7 @@ onUnmounted(() => {
               </div>
             </article>
           </div>
-          <div class="section-action"><router-link class="btn btn-outline-light rounded-pill px-4" to="/testimonials">Lihat Semua Testimoni <i class="bi bi-arrow-right ms-2"></i></router-link></div>
+          <div class="section-action"><router-link class="btn btn-outline-light rounded-pill px-4 section-action-button" :to="section.config.action_button_url">{{ section.config.action_button_label }} <i class="bi bi-arrow-right ms-2"></i></router-link></div>
         </div>
       </section>
 
@@ -457,8 +564,8 @@ onUnmounted(() => {
         <SectionDecor :section="section" />
         <div class="container">
           <div class="row align-items-end mb-5">
-            <div class="col-lg-8"><span class="section-eyebrow">{{ section.eyebrow }}</span><h2 class="section-title">{{ section.title }}</h2></div>
-            <div class="col-lg-4 text-lg-end"><router-link to="/blog" class="btn btn-outline-danger rounded-pill px-4">Semua Artikel <i class="bi bi-arrow-right"></i></router-link></div>
+            <div class="col-lg-8"><span class="section-eyebrow">{{ section.eyebrow }}</span><h2 class="section-title">{{ section.title }}</h2><p v-if="section.subtitle" class="section-lead mt-3 mb-0">{{ section.subtitle }}</p></div>
+            <div class="col-lg-4 text-lg-end"><router-link :to="section.config.action_button_url" class="btn btn-outline-danger rounded-pill px-4 section-action-button">{{ section.config.action_button_label }} <i class="bi bi-arrow-right"></i></router-link></div>
           </div>
           <div class="row g-4">
             <div v-for="post in content.posts.slice(0,3)" :key="post.id" class="col-md-6 col-lg-4">
@@ -468,7 +575,7 @@ onUnmounted(() => {
                   <div class="article-meta"><span class="article-cat">{{ post.category }}</span><time class="article-date">{{ new Date(post.published_at).toLocaleDateString('id-ID',{dateStyle:'medium'}) }}</time></div>
                   <h3 class="article-title">{{ post.title }}</h3>
                   <p class="article-excerpt">{{ post.excerpt }}</p>
-                  <router-link :to="`/blog/${post.slug}`" class="article-read-more">Baca Selengkapnya <i class="bi bi-arrow-right"></i></router-link>
+                  <router-link :to="`/blog/${post.slug}`" class="article-read-more">{{ section.config.read_more_label }} <i class="bi bi-arrow-right"></i></router-link>
                 </div>
               </article>
             </div>
@@ -501,31 +608,31 @@ onUnmounted(() => {
         <div class="container position-relative" style="z-index:2">
           <div class="row align-items-center g-5">
             <div class="col-lg-5">
-              <span class="section-eyebrow text-rose">{{ section.eyebrow }}</span>
-              <h2 class="section-title text-white">{{ section.title }}</h2>
-              <p class="text-white-50 mt-3">{{ section.subtitle }}</p>
+              <span class="section-eyebrow">{{ section.eyebrow }}</span>
+              <h2 class="section-title">{{ section.title }}</h2>
+              <p class="section-lead mt-3">{{ section.subtitle }}</p>
               <div class="contact-list">
-                <a :href="whatsapp()" target="_blank"><i class="bi bi-whatsapp"></i><span><small>WhatsApp</small>{{ settings.whatsapp_number }}</span></a>
-                <a :href="`tel:${settings.phone}`"><i class="bi bi-telephone"></i><span><small>Telepon</small>{{ settings.phone }}</span></a>
-                <a :href="`mailto:${settings.email}`"><i class="bi bi-envelope"></i><span><small>Email</small>{{ settings.email }}</span></a>
-                <a :href="settings.maps_url" target="_blank"><i class="bi bi-geo-alt"></i><span><small>Head Office</small>{{ settings.address }}</span></a>
+                <a v-if="section.config.show_whatsapp !== 0" :href="whatsapp()" target="_blank"><i class="bi bi-whatsapp"></i><span><small>{{ section.config.whatsapp_label }}</small>{{ settings.whatsapp_number }}</span></a>
+                <a v-if="section.config.show_phone !== 0" :href="`tel:${settings.phone}`"><i class="bi bi-telephone"></i><span><small>{{ section.config.phone_label }}</small>{{ settings.phone }}</span></a>
+                <a v-if="section.config.show_email !== 0" :href="`mailto:${settings.email}`"><i class="bi bi-envelope"></i><span><small>{{ section.config.email_label }}</small>{{ settings.email }}</span></a>
+                <a v-if="section.config.show_address !== 0" :href="settings.maps_url" target="_blank"><i class="bi bi-geo-alt"></i><span><small>{{ section.config.address_label }}</small>{{ settings.address }}</span></a>
               </div>
             </div>
             <div class="col-lg-7">
               <div class="lead-form-card">
-                <h3 class="text-white mb-4">Request Konsultasi</h3>
+                <h3 class="mb-4">{{ section.config.form_title }}</h3>
                 <form @submit.prevent="submitLead">
                   <div class="row g-3">
-                    <div class="col-md-6"><label class="form-label">Nama Lengkap *</label><input v-model="lead.name" required class="form-control"></div>
-                    <div class="col-md-6"><label class="form-label">No. WhatsApp *</label><input v-model="lead.whatsapp" required class="form-control"></div>
-                    <div class="col-md-6"><label class="form-label">Perusahaan / Instansi</label><input v-model="lead.company" class="form-control"></div>
-                    <div class="col-md-6"><label class="form-label">Jabatan</label><input v-model="lead.position" class="form-control"></div>
-                    <div class="col-12"><label class="form-label">Kebutuhan Training</label><select v-model="lead.program" class="form-select"><option value="">Pilih program</option><option v-for="program in content.programs" :key="program.id">{{ program.title }}</option></select></div>
-                    <div class="col-md-6"><label class="form-label">Jumlah Peserta</label><select v-model="lead.participants" class="form-select"><option>1–20 orang</option><option>21–50 orang</option><option>51–100 orang</option><option>100+ orang</option></select></div>
-                    <div class="col-md-6"><label class="form-label">Estimasi Waktu</label><select v-model="lead.timeline" class="form-select"><option>Bulan ini</option><option>1–3 bulan ke depan</option><option>3–6 bulan ke depan</option><option>Masih eksplorasi</option></select></div>
-                    <div class="col-12"><label class="form-label">Pesan Tambahan</label><textarea v-model="lead.message" class="form-control" rows="3"></textarea></div>
+                    <div class="col-md-6"><label class="form-label">{{ section.config.name_label }}</label><input v-model="lead.name" required class="form-control"></div>
+                    <div class="col-md-6"><label class="form-label">{{ section.config.whatsapp_field_label }}</label><input v-model="lead.whatsapp" required class="form-control"></div>
+                    <div class="col-md-6"><label class="form-label">{{ section.config.company_label }}</label><input v-model="lead.company" class="form-control"></div>
+                    <div class="col-md-6"><label class="form-label">{{ section.config.position_label }}</label><input v-model="lead.position" class="form-control"></div>
+                    <div class="col-12"><label class="form-label">{{ section.config.program_label }}</label><select v-model="lead.program" class="form-select"><option value="">{{ section.config.program_placeholder }}</option><option v-for="program in content.programs" :key="program.id">{{ program.title }}</option></select></div>
+                    <div class="col-md-6"><label class="form-label">{{ section.config.participants_label }}</label><select v-model="lead.participants" class="form-select"><option v-for="option in section.config.participant_options" :key="option">{{ option }}</option></select></div>
+                    <div class="col-md-6"><label class="form-label">{{ section.config.timeline_label }}</label><select v-model="lead.timeline" class="form-select"><option v-for="option in section.config.timeline_options" :key="option">{{ option }}</option></select></div>
+                    <div class="col-12"><label class="form-label">{{ section.config.message_label }}</label><textarea v-model="lead.message" class="form-control" rows="3"></textarea></div>
                     <div v-if="notice" class="col-12"><div class="alert alert-light mb-0">{{ notice }}</div></div>
-                    <div class="col-12"><button :disabled="sending" class="btn btn-danger w-100 rounded-pill py-3"><i class="bi bi-send me-2"></i>{{ sending ? 'Mengirim...' : 'Kirim Request Konsultasi' }}</button></div>
+                    <div class="col-12"><button :disabled="sending" class="btn btn-danger w-100 rounded-pill py-3"><i class="bi bi-send me-2"></i>{{ sending ? section.config.submitting_label : section.config.submit_label }}</button></div>
                   </div>
                 </form>
               </div>
@@ -538,7 +645,7 @@ onUnmounted(() => {
         <SectionDecor :section="section" />
         <div class="container">
           <div class="row justify-content-center"><div class="col-lg-8">
-            <div class="text-center mb-5"><span class="section-eyebrow">{{ section.eyebrow }}</span><h2 class="section-title">{{ section.title }}</h2></div>
+            <div class="text-center mb-5"><span class="section-eyebrow">{{ section.eyebrow }}</span><h2 class="section-title">{{ section.title }}</h2><p v-if="section.subtitle" class="section-lead mx-auto mt-3">{{ section.subtitle }}</p></div>
             <div v-for="faq in content.faqs" :key="faq.id" class="faq-item">
               <button class="faq-question" :class="{ open: openFaq === faq.id }" @click="openFaq = openFaq === faq.id ? null : faq.id"><span>{{ faq.question }}</span><i class="bi" :class="openFaq === faq.id ? 'bi-dash' : 'bi-plus'"></i></button>
               <div class="faq-answer" :class="{ open: openFaq === faq.id }">{{ faq.answer }}</div>
@@ -547,12 +654,13 @@ onUnmounted(() => {
         </div>
       </section>
 
-      <section v-else-if="section.section_key === 'cta'" :class="sectionClass(section)" :style="sectionStyle(section)">
+      <section v-else-if="section.section_key === 'cta'" :id="sectionId(section.section_key)" :class="sectionClass(section)" :style="sectionStyle(section)">
         <SectionDecor :section="section" />
         <div class="container position-relative text-center" style="z-index:2">
-          <h2 class="text-white display-6 fw-bold">{{ section.title }}</h2>
-          <p class="text-white-50 fs-5 mx-auto mb-4" style="max-width:600px">{{ section.subtitle }}</p>
-          <a :href="whatsapp()" target="_blank" class="btn btn-light btn-lg rounded-pill px-5"><i class="bi bi-whatsapp me-2"></i>{{ section.config.button_label }}</a>
+          <span v-if="section.eyebrow" class="section-eyebrow">{{ section.eyebrow }}</span>
+          <h2 class="section-title display-6 fw-bold">{{ section.title }}</h2>
+          <p class="section-lead fs-5 mx-auto mb-4" style="max-width:600px">{{ section.subtitle }}</p>
+          <a :href="whatsapp()" target="_blank" class="btn btn-light btn-lg rounded-pill px-5 section-action-button"><i class="bi bi-whatsapp me-2"></i>{{ section.config.button_label }}</a>
         </div>
       </section>
     </template>
@@ -566,7 +674,7 @@ onUnmounted(() => {
 
 <style scoped>
 .hero-primary{background:var(--grad-red);color:#fff;border:0;border-radius:50px;padding:14px 32px;font-weight:600}
-.hero-secondary{background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.25);border-radius:50px;padding:14px 32px}
+.hero-secondary{background:rgba(255,255,255,.76);color:#9f1239;border:1px solid rgba(196,30,58,.24);border-radius:50px;padding:14px 32px}
 .hero-main-image{max-height:80vh;max-width:100%;border-radius:24px;box-shadow:0 40px 80px rgba(139,0,0,.4);object-fit:contain}
 .hero-image-wrap{padding-top:5.25rem}
 .hero-program-slider{width:min(100%,520px);background:rgba(255,255,255,.78);border:1px solid rgba(255,255,255,.78);border-radius:24px;box-shadow:0 30px 90px rgba(196,30,58,.20);overflow:hidden;backdrop-filter:blur(14px)}
@@ -603,7 +711,7 @@ onUnmounted(() => {
 .slider-prev{left:-.75rem}
 .slider-next{right:-.75rem}
 .text-rose{color:var(--clr-rose-light,#f8b4c2)!important}
-.contact-list{display:grid;gap:1rem;margin-top:2rem}.contact-list a{display:flex;align-items:center;gap:1rem;color:#fff;text-decoration:none}.contact-list i{width:44px;height:44px;border-radius:10px;background:rgba(196,30,58,.2);display:grid;place-items:center;color:var(--clr-red-light)}.contact-list span{display:grid}.contact-list small{color:rgba(255,255,255,.45)}
+.contact-list{display:grid;gap:1rem;margin-top:2rem}.contact-list a{display:flex;align-items:center;gap:1rem;color:#172033;text-decoration:none}.contact-list i{width:44px;height:44px;border-radius:10px;background:rgba(196,30,58,.12);display:grid;place-items:center;color:#b91c1c}.contact-list span{display:grid}.contact-list small{color:#64748b}
 .lightbox{position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:9999;display:grid;place-items:center;padding:1rem}.lightbox img{max-width:94vw;max-height:92vh;border-radius:12px}
 .dynamic-section {
   margin-top: var(--section-margin-top-desktop, 0);
@@ -701,6 +809,12 @@ onUnmounted(() => {
 .dynamic-section.has-custom-font *:not(.bi) {
   font-family: var(--section-font-family) !important;
 }
+.dynamic-section.has-eyebrow-spacing .section-eyebrow,
+.dynamic-section.has-eyebrow-spacing .hero-badge { margin-top:var(--section-eyebrow-margin-desktop, initial); margin-bottom:var(--section-eyebrow-margin-desktop, initial); padding-block:var(--section-eyebrow-padding-desktop, 0); }
+.dynamic-section.has-title-spacing .section-title,
+.dynamic-section.has-title-spacing .hero-title { margin-top:var(--section-title-margin-desktop, initial); margin-bottom:var(--section-title-margin-desktop, initial); padding-block:var(--section-title-padding-desktop, 0); }
+.dynamic-section.has-subtitle-spacing .section-lead,
+.dynamic-section.has-subtitle-spacing .hero-subtitle { margin-top:var(--section-subtitle-margin-desktop, initial); margin-bottom:var(--section-subtitle-margin-desktop, initial); padding-block:var(--section-subtitle-padding-desktop, 0); }
 .dynamic-section :deep(.section-divider) {
   position: absolute;
   left: -1%;
@@ -866,6 +980,9 @@ onUnmounted(() => {
   .dynamic-section.has-text-size-mobile .hero-subtitle {
     font-size: var(--section-text-mobile);
   }
+  .dynamic-section.has-eyebrow-spacing .section-eyebrow,.dynamic-section.has-eyebrow-spacing .hero-badge { margin-top:var(--section-eyebrow-margin-mobile, var(--section-eyebrow-margin-desktop, initial)); margin-bottom:var(--section-eyebrow-margin-mobile, var(--section-eyebrow-margin-desktop, initial)); padding-block:var(--section-eyebrow-padding-mobile, var(--section-eyebrow-padding-desktop, 0)); }
+  .dynamic-section.has-title-spacing .section-title,.dynamic-section.has-title-spacing .hero-title { margin-top:var(--section-title-margin-mobile, var(--section-title-margin-desktop, initial)); margin-bottom:var(--section-title-margin-mobile, var(--section-title-margin-desktop, initial)); padding-block:var(--section-title-padding-mobile, var(--section-title-padding-desktop, 0)); }
+  .dynamic-section.has-subtitle-spacing .section-lead,.dynamic-section.has-subtitle-spacing .hero-subtitle { margin-top:var(--section-subtitle-margin-mobile, var(--section-subtitle-margin-desktop, initial)); margin-bottom:var(--section-subtitle-margin-mobile, var(--section-subtitle-margin-desktop, initial)); padding-block:var(--section-subtitle-padding-mobile, var(--section-subtitle-padding-desktop, 0)); }
   .dynamic-section :deep(.section-divider) {
     height: var(--section-divider-height-mobile, 28px);
   }

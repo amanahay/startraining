@@ -1,12 +1,25 @@
 <script setup>
 import { computed, onMounted, onUnmounted, ref } from 'vue';
+import { useRouter } from 'vue-router';
 
 const props = defineProps({ settings: { type: Object, default: () => ({}) }, navigation: { type: Array, default: () => [] } });
+const router = useRouter();
 const scrolled = ref(false);
 const menuOpen = ref(false);
 const brandParts = computed(() => String(props.settings.logo_text || props.settings.site_short_name || 'STAR Training').split(' '));
 
 function onScroll() { scrolled.value = window.scrollY > 50; }
+async function goToLandingSection(url) {
+  const sectionId = String(url).split('#')[1];
+  if (!sectionId) return;
+  menuOpen.value = false;
+  if (router.currentRoute.value.path !== '/') await router.push('/');
+  requestAnimationFrame(() => {
+    const section = document.getElementById(sectionId);
+    history.pushState({ ...(history.state || {}), landingSection: sectionId, landingOffset: 0 }, '', '/');
+    if (section) window.scrollTo({ top: Math.max(0, section.getBoundingClientRect().top + window.scrollY - 72), behavior: 'smooth' });
+  });
+}
 onMounted(() => {
   document.documentElement.dataset.theme = 'light';
   window.addEventListener('scroll', onScroll, { passive: true });
@@ -31,7 +44,8 @@ onUnmounted(() => window.removeEventListener('scroll', onScroll));
       <div class="collapse navbar-collapse" :class="{ show: menuOpen }">
         <ul class="navbar-nav mx-auto">
           <li v-for="item in navigation" :key="item.id" class="nav-item">
-            <router-link v-if="item.url.startsWith('/')" class="nav-link" :to="item.url" @click="menuOpen=false">{{ item.label }}</router-link>
+            <a v-if="item.url.startsWith('/#')" class="nav-link" href="/" @click.prevent="goToLandingSection(item.url)">{{ item.label }}</a>
+            <router-link v-else-if="item.url.startsWith('/')" class="nav-link" :to="item.url" @click="menuOpen=false">{{ item.label }}</router-link>
             <a v-else class="nav-link" :href="item.url" :target="item.target" @click="menuOpen=false">{{ item.label }}</a>
           </li>
         </ul>

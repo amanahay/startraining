@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const viteBin = path.join(root, 'node_modules', 'vite', 'bin', 'vite.js');
 const serverPort = Number(process.env.PORT || 3100);
+const clientPort = Number(process.env.VITE_PORT || 18473);
 const processes = [];
 
 function run(command, args) {
@@ -38,6 +39,20 @@ function waitForServer() {
 function isServerReady() {
   return new Promise((resolve) => {
     const request = http.get(`http://localhost:${serverPort}/api/health`, (response) => {
+      response.resume();
+      resolve(Boolean(response.statusCode && response.statusCode < 500));
+    });
+    request.on('error', () => resolve(false));
+    request.setTimeout(500, () => {
+      request.destroy();
+      resolve(false);
+    });
+  });
+}
+
+function isClientReady() {
+  return new Promise((resolve) => {
+    const request = http.get(`http://localhost:${clientPort}/`, (response) => {
       response.resume();
       resolve(Boolean(response.statusCode && response.statusCode < 500));
     });
@@ -87,9 +102,13 @@ async function main() {
     watchChild(server);
     await waitForServer();
   }
-  const client = run(process.execPath, [viteBin, '--config', 'client/vite.config.js']);
-  processes.push(client);
-  watchChild(client);
+  if (await isClientReady()) {
+    console.log(`Vite already running at http://localhost:${clientPort}`);
+  } else {
+    const client = run(process.execPath, [viteBin, '--config', 'client/vite.config.js']);
+    processes.push(client);
+    watchChild(client);
+  }
 }
 
 process.on('SIGINT', () => shutdown('SIGINT'));

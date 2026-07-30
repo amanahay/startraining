@@ -2,6 +2,7 @@
 import { computed, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { api } from '../api.js';
+import { notifyCmsChange } from '../cmsSync.js';
 
 const router = useRouter();
 const user = ref({});
@@ -13,6 +14,7 @@ const toasts = ref([]);
 const savingRecord = ref(false);
 const savingSettings = ref(false);
 const savingSections = ref(new Set());
+const openSectionId = ref(null);
 const bulkOpen = ref(false);
 const bulkJson = ref('');
 const bulkSaving = ref(false);
@@ -26,24 +28,30 @@ const printOrder = ref(null);
 const uploadUrl = ref('');
 const uploadResult = ref(null);
 const mediaData = ref({ summary: {}, files: [] });
+const galleryOptions = ref([]);
+const selectedGalleryId = ref('');
+const proposalOverview = ref([]);
+const previewProposalSlug = ref('');
+const proposalJson = ref('');
 
 const nav = [
   ['dashboard', 'bi-speedometer2', 'Dashboard'],
   ['sections', 'bi-layout-text-window-reverse', 'Struktur Landing'],
   ['about_pages', 'bi-info-circle', 'Halaman Tentang'],
   ['about_values', 'bi-gem', 'Nilai Tentang'],
-  ['about_advantages', 'bi-check2-circle', 'Keunggulan Tentang'],
+  ['about_advantages', 'bi-check2-circle', 'Keunggulan'],
   ['service_pages', 'bi-grid-1x2', 'Halaman Layanan'],
-  ['service_items', 'bi-briefcase', 'Item Layanan'],
   ['program_pages', 'bi-card-list', 'Halaman Program'],
+  ['consultation_pages', 'bi-chat-square-text', 'Halaman Konsultasi'],
+  ['client_pages', 'bi-building', 'Halaman Klien'],
+  ['events', 'bi-calendar-event', 'Event'], ['event_pages', 'bi-calendar-week', 'Halaman Event'],
+  ['proposal_pages', 'bi-file-earmark-richtext', 'Proposal'],
   ['programs', 'bi-journal-check', 'Program'],
   ['trainers', 'bi-people', 'Trainer'],
   ['galleries', 'bi-images', 'Album Galeri'],
-  ['gallery_images', 'bi-image', 'Foto Galeri'],
   ['posts', 'bi-newspaper', 'Blog'],
   ['testimonials', 'bi-chat-quote', 'Testimoni'],
   ['faqs', 'bi-question-circle', 'FAQ'],
-  ['clients', 'bi-building', 'Logo Klien'],
   ['features', 'bi-stars', 'Keunggulan'],
   ['partners', 'bi-diagram-3', 'Kemitraan'],
   ['stats', 'bi-bar-chart', 'Statistik'],
@@ -86,7 +94,7 @@ const schemas = {
   },
   gallery_images: {
     title: 'Foto Galeri', fields: {
-      gallery_id: ['ID Album', 'number', true], image_url: ['File Gambar', 'image', true], alt_text: ['Alt Text SEO', 'text'],
+      gallery_id: ['Pilih Album', 'gallery-select', true], image_url: ['File Gambar', 'image', true], alt_text: ['Alt Text SEO', 'text'],
       caption: ['Caption', 'textarea'], sort_order: ['Urutan', 'number']
     }
   },
@@ -164,6 +172,23 @@ const schemas = {
       is_published: ['Tayang', 'boolean']
     }
   },
+  consultation_pages: {
+    title: 'Halaman Request Konsultasi', fields: {
+      eyebrow: ['Label', 'text'], title: ['Judul', 'text', true], subtitle: ['Deskripsi', 'textarea'], form_title: ['Judul Form', 'text'], form_description: ['Deskripsi Form', 'textarea'],
+      name_label: ['Label Nama', 'text'], whatsapp_label: ['Label WhatsApp', 'text'], company_label: ['Label Perusahaan', 'text'], message_label: ['Label Pesan', 'text'], submit_label: ['Label Tombol', 'text'],
+      background_color: ['Warna Background', 'text'], label_color: ['Warna Label', 'text'], title_color: ['Warna Judul', 'text'], description_color: ['Warna Deskripsi', 'text'],
+      button_background_color: ['Warna Latar Tombol', 'text'], button_text_color: ['Warna Teks Tombol', 'text'], button_border_color: ['Warna Border Tombol', 'text'],
+      label_font: ['Font Label', 'text'], title_font: ['Font Judul', 'text'], description_font: ['Font Deskripsi', 'text'], button_font: ['Font Tombol', 'text'],
+      label_size: ['Ukuran Label px', 'number'], title_size: ['Ukuran Judul px', 'number'], description_size: ['Ukuran Deskripsi px', 'number'], button_size: ['Ukuran Tombol px', 'number'],
+      meta_title: ['SEO Title', 'text'], meta_description: ['SEO Description', 'textarea'], meta_keywords: ['SEO Keywords', 'textarea'], is_published: ['Tayang', 'boolean']
+    }
+  },
+  client_pages: { title: 'Halaman Klien', fields: { eyebrow: ['Label', 'text'], title: ['Judul', 'text', true], subtitle: ['Deskripsi', 'textarea'], meta_title: ['SEO Title', 'text'], meta_description: ['SEO Description', 'textarea'], meta_keywords: ['SEO Keywords', 'textarea'], is_published: ['Tayang', 'boolean'] } },
+  events: { title: 'Event', fields: { title:['Judul','text',true],slug:['Slug','text',true],description:['Ringkasan','textarea'],content:['Detail Event','wysiwyg'],image_url:['Gambar','image'],location:['Lokasi','text'],starts_at:['Mulai WIB','datetime-local'],ends_at:['Selesai WIB','datetime-local'],reservation_enabled:['Reservasi WhatsApp','boolean'],reservation_label:['Label Reservasi','text'],is_featured:['Tampil di Landing','boolean'],is_published:['Tayang','boolean'],sort_order:['Urutan Slider','number'] } },
+  event_pages: { title:'Halaman Event', fields:{ eyebrow:['Label','text'],title:['Judul','text',true],subtitle:['Deskripsi','textarea'],meta_title:['SEO Title','text'],meta_description:['SEO Description','textarea'],meta_keywords:['SEO Keywords','textarea'],is_published:['Tayang','boolean'] } },
+  proposal_pages: { title:'Halaman Proposal', fields:{ eyebrow:['Label Hero','text'],title:['Judul Default','text',true],subtitle:['Deskripsi Default','textarea'],package_eyebrow:['Label Paket','text'],package_title:['Judul Paket','text'],package_subtitle:['Deskripsi Paket','textarea'],contact_title:['Judul Kontak','text'],contact_subtitle:['Deskripsi Kontak','textarea'],meta_title:['SEO Title','text'],meta_description:['SEO Description','textarea'],meta_keywords:['SEO Keywords','textarea'],is_published:['Tayang','boolean'] } },
+  proposals: { title:'Penawaran Proposal', fields:{ institution_name:['Nama Instansi','text',true],contact_name:['Nama PIC','text'],contact_whatsapp:['WhatsApp PIC','text'],title:['Judul Proposal','text'],slug:['Slug URL','text',true],hero_title:['Judul Hero Khusus','text'],hero_subtitle:['Deskripsi Hero Khusus','textarea'],intro_content:['Isi Pengantar Proposal','wysiwyg'],valid_until:['Berlaku Sampai','date'],is_published:['Tayang','boolean'] } },
+  proposal_packages: { title:'Paket Proposal', fields:{ title:['Nama Paket','text',true],description:['Deskripsi Paket','textarea'],price_label:['Label Harga','text'],features:['Fitur Paket (satu per baris)','textarea'],button_label:['Label Tombol','text'],is_featured:['Paket Unggulan','boolean'],is_published:['Tayang','boolean'],sort_order:['Urutan','number'] } },
   stats: { title: 'Statistik Homepage', fields: { label: ['Label', 'text', true], value: ['Nilai Angka', 'number'], prefix: ['Awalan', 'text'], suffix: ['Akhiran', 'text'], icon: ['Bootstrap Icon', 'text'], is_published: ['Tayang', 'boolean'], sort_order: ['Urutan', 'number'] } },
   navigation: {
     title: 'Navigasi', fields: {
@@ -268,6 +293,18 @@ const bulkExamples = {
     { label: 'Program Pelatihan Selesai', value: 1200, prefix: '', suffix: '+', icon: 'bi-calendar-check', is_published: 1, sort_order: 20 },
     { label: 'Total Peserta Training', value: 25000, prefix: '', suffix: '+', icon: 'bi-people', is_published: 1, sort_order: 30 },
     { label: 'Tahun Pengalaman', value: 12, prefix: '', suffix: '+', icon: 'bi-award', is_published: 1, sort_order: 40 }
+  ], null, 2),
+  proposals: JSON.stringify([
+    { institution_name: 'PT Contoh Indonesia', contact_name: 'Bapak Andi', contact_whatsapp: '081234567890', title: 'Proposal Pelatihan untuk {{NAMA_INSTANSI}}', slug: 'pt-contoh-indonesia', hero_title: 'Penawaran Program Pelatihan untuk {{NAMA_INSTANSI}}', hero_subtitle: 'Solusi pelatihan yang disesuaikan dengan kebutuhan organisasi.', intro_content: '<h2>Salam</h2><p>Terima kasih atas kesempatan yang diberikan.</p>', valid_until: '2026-12-31', is_published: 1 },
+    { institution_name: 'Dinas Contoh Kota', contact_name: 'Ibu Sari', contact_whatsapp: '081298765432', title: 'Proposal untuk {{NAMA_INSTANSI}}', hero_title: 'Rancangan Pelatihan untuk {{NAMA_INSTANSI}}', hero_subtitle: 'Program yang fleksibel dan terukur.', intro_content: '<p>Isi pengantar proposal.</p>', valid_until: '2026-12-31', is_published: 1 }
+  ], null, 2),
+  proposal_packages: JSON.stringify([
+    { title: 'Paket Essential', description: 'Paket awal untuk kebutuhan pelatihan organisasi.', price_label: 'Mulai dari Rp 5.000.000', features: ['Konsultasi kebutuhan', 'Materi dapat disesuaikan', 'Trainer profesional'], button_label: 'Pilih Paket', is_featured: 0, is_published: 1, sort_order: 10 },
+    { title: 'Paket Professional', description: 'Pilihan lengkap untuk program yang membutuhkan rancangan lebih detail.', price_label: 'Hubungi kami untuk penawaran', features: ['Semua fasilitas Essential', 'Pre-assessment kebutuhan', 'Dokumentasi dan evaluasi'], button_label: 'Pilih Paket Ini', is_featured: 1, is_published: 1, sort_order: 20 }
+  ], null, 2),
+  clients: JSON.stringify([
+    { name: 'PT Contoh Indonesia', logo_url: 'https://contoh.com/logo-pt-contoh.webp', website_url: 'https://contoh.com', is_published: 1, sort_order: 10 },
+    { name: 'Dinas Contoh Kota', logo_url: 'https://contoh.com/logo-dinas-contoh.webp', website_url: '', is_published: 1, sort_order: 20 }
   ], null, 2)
 };
 
@@ -282,6 +319,7 @@ async function importBulk() {
     const payload = JSON.parse(bulkJson.value);
     const result = await api(`/admin/bulk/${active.value}`, { method: 'POST', body: payload });
     showNotice(result.message, 'success');
+    notifyCmsChange(active.value);
     bulkOpen.value = false;
     await selectPage(active.value);
   } catch (error) {
@@ -305,6 +343,11 @@ async function selectPage(page) {
     else if (page === 'settings' || page === 'seo') settings.value = await api('/admin/settings');
     else if (page === 'media') mediaData.value = await api('/admin/media');
     else if (schemas[page]) records.value = await api(`/admin/${page}`);
+    if (page === 'proposal_pages') {
+      proposalOverview.value = await api('/admin/proposals');
+      previewProposalSlug.value = previewProposalSlug.value || proposalOverview.value[0]?.slug || '';
+    }
+    if (['galleries', 'gallery_images'].includes(page)) galleryOptions.value = await api('/admin/galleries');
     if (page === 'sections') {
       sections.value = sections.value.map((section) => ({
         ...section,
@@ -314,27 +357,39 @@ async function selectPage(page) {
           scroll_height: section.config?.scroll_height || 240,
           sitelink_enabled: section.config?.sitelink_enabled ?? 1,
           sitelink_label: section.config?.sitelink_label || section.title || section.name,
+          about_button_label: section.config?.about_button_label || 'Selengkapnya Tentang Kami',
+          about_button_url: section.config?.about_button_url || '/about',
+          action_button_label: section.config?.action_button_label || '',
+          action_button_url: section.config?.action_button_url || '',
+          form_title: section.config?.form_title || 'Request Konsultasi',
+          button_label: section.config?.button_label || 'Hubungi Kami Sekarang',
           style: {
             background_color: '',
-            text_color: '',
+            eyebrow_color: '',
+            eyebrow_font_family: '',
+            eyebrow_size_desktop: 12,
+            eyebrow_size_mobile: 11,
             heading_color: '',
+            title_font_family: '',
+            title_size_desktop: section.section_key === 'hero' ? 64 : 44,
+            title_size_mobile: section.section_key === 'hero' ? 30 : 32,
+            text_color: '',
+            subtitle_font_family: '',
+            text_size_desktop: 18,
+            text_size_mobile: 16,
             font_family: '',
             text_align: '',
-            title_size_desktop: '',
-            title_size_mobile: '',
-            text_size_desktop: '',
-            text_size_mobile: '',
-            padding_desktop: '',
-            padding_mobile: '',
-            margin_top_desktop: '',
-            margin_bottom_desktop: '',
-            margin_top_mobile: '',
-            margin_bottom_mobile: '',
+            padding_desktop: 96,
+            padding_mobile: 64,
+            margin_top_desktop: 0,
+            margin_bottom_desktop: 0,
+            margin_top_mobile: 0,
+            margin_bottom_mobile: 0,
             divider_type: 'curve',
             divider_position: 'bottom',
             divider_color: '',
-            divider_height_desktop: 56,
-            divider_height_mobile: 28,
+            divider_height_desktop: 42,
+            divider_height_mobile: 24,
             parallax_enabled: 0,
             parallax_image_url: '',
             parallax_overlay_color: '#000000',
@@ -346,16 +401,31 @@ async function selectPage(page) {
             particles_enabled: section.section_key === 'hero' ? 1 : 0,
             particle_color: 'rgba(255,255,255,.92)',
             particle_count: section.section_key === 'hero' ? 12 : 0,
+            button_variant: '',
+            button_background_color: '',
+            button_text_color: '',
+            button_border_color: '',
+            button_font_family: '',
+            button_font_size_desktop: 16,
+            button_font_size_mobile: 15,
+            eyebrow_margin_desktop: 0, eyebrow_margin_mobile: 0, eyebrow_padding_desktop: 0, eyebrow_padding_mobile: 0,
+            title_margin_desktop: 0, title_margin_mobile: 0, title_padding_desktop: 0, title_padding_mobile: 0,
+            subtitle_margin_desktop: 0, subtitle_margin_mobile: 0, subtitle_padding_desktop: 0, subtitle_padding_mobile: 0,
             ...(section.config?.style || {})
           }
         }
       }));
+      openSectionId.value = sections.value[0]?.id || null;
     }
   } catch (error) {
     showNotice(error.message, 'error');
   } finally {
     loading.value = false;
   }
+}
+
+function toggleSection(sectionId) {
+  openSectionId.value = openSectionId.value === sectionId ? null : sectionId;
 }
 
 function blankRecord() {
@@ -376,14 +446,48 @@ function blankRecord() {
     item.display_seconds = 4;
     item.occurred_at = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString().slice(0, 16);
   }
+  if (active.value === 'gallery_images' && selectedGalleryId.value) item.gallery_id = Number(selectedGalleryId.value);
   return item;
 }
 
-function openCreate() { editing.value = blankRecord(); }
+function proposalJsonExample() {
+  return active.value === 'proposal_packages'
+    ? JSON.stringify({ title: 'Paket Professional', description: 'Paket pelatihan untuk kebutuhan organisasi.', price_label: 'Mulai dari Rp 10.000.000', features: ['Konsultasi kebutuhan', 'Materi custom', 'Trainer profesional', 'Dokumentasi kegiatan'], button_label: 'Pilih Paket Ini', is_featured: 1, is_published: 1, sort_order: 20 }, null, 2)
+    : JSON.stringify({ institution_name: 'PT Contoh Indonesia', contact_name: 'Bapak/Ibu PIC', contact_whatsapp: '081234567890', title: 'Proposal Pelatihan untuk {{NAMA_INSTANSI}}', slug: 'pt-contoh-indonesia', hero_title: 'Penawaran Program Pelatihan untuk {{NAMA_INSTANSI}}', hero_subtitle: 'Solusi pelatihan yang dirancang sesuai kebutuhan organisasi Anda.', intro_content: '<h2>Salam</h2><p>Terima kasih atas kesempatan yang diberikan kepada STAR Training & Consulting.</p>', valid_until: '2026-12-31', is_published: 1 }, null, 2);
+}
+function openCreate() { editing.value = blankRecord(); proposalJson.value = ['proposals', 'proposal_packages'].includes(active.value) ? proposalJsonExample() : ''; }
+function applyProposalJson() {
+  try {
+    const payload = JSON.parse(proposalJson.value);
+    if (!payload || Array.isArray(payload)) throw new Error('Gunakan satu objek JSON, bukan array.');
+    const allowed = Object.keys(currentSchema.value.fields);
+    for (const field of allowed) if (payload[field] !== undefined) editing.value[field] = field === 'features' && Array.isArray(payload[field]) ? payload[field].join('\n') : payload[field];
+    if (payload.slug === undefined) eventSlugFromTitle();
+    showNotice('JSON berhasil diterapkan ke formulir. Periksa lalu klik Simpan.', 'success');
+  } catch (error) { showNotice(`JSON tidak valid: ${error.message}`, 'danger'); }
+}
+async function openGalleryImages(galleryId = '') {
+  await selectPage('gallery_images');
+  selectedGalleryId.value = galleryId ? String(galleryId) : '';
+}
+function eventSlugFromTitle() {
+  if (!['events', 'proposals'].includes(active.value) || editing.value?.id) return;
+  const source = active.value === 'proposals' ? editing.value.institution_name : editing.value.title;
+  const base = String(source || '').toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || (active.value === 'proposals' ? 'proposal' : 'event');
+  const used = new Set(records.value.map((item) => item.slug));
+  let slug = base; let index = 2;
+  while (used.has(slug)) slug = `${base}-${index++}`;
+  editing.value.slug = slug;
+}
+function proposalUrl(slug) { return `${window.location.origin}/proposal/${slug}`; }
+function proposalQr(slug) { return `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(proposalUrl(slug))}`; }
 function openEdit(item) {
   editing.value = { ...item };
   if (active.value === 'trainers') {
     try { editing.value.certifications = JSON.parse(editing.value.certifications || '[]').join(', '); } catch {}
+  }
+  if (active.value === 'proposal_packages') {
+    try { editing.value.features = JSON.parse(editing.value.features || '[]').join('\n'); } catch {}
   }
 }
 
@@ -408,6 +512,7 @@ async function saveRecord() {
     await api(`/admin/${active.value}${isExisting ? `/${editing.value.id}` : ''}`, { method: isExisting ? 'PUT' : 'POST', body: editing.value });
     editing.value = null;
     showNotice('Data berhasil disimpan.');
+    notifyCmsChange(active.value);
     await selectPage(active.value);
   } catch (error) { showNotice(error.message, 'danger'); }
   finally { savingRecord.value = false; }
@@ -418,8 +523,47 @@ async function removeRecord(item) {
   try {
     await api(`/admin/${active.value}/${item.id}`, { method: 'DELETE' });
     showNotice('Data berhasil dihapus.');
+    notifyCmsChange(active.value);
     await selectPage(active.value);
   } catch (error) { showNotice(error.message, 'error'); }
+}
+
+const navPresets = [
+  { label: 'Home', url: '/#hero', location: 'header', sort_order: 10 },
+  { label: 'Tentang', url: '/about', location: 'header', sort_order: 20 },
+  { label: 'Layanan', url: '/services', location: 'header', sort_order: 30 },
+  { label: 'Program', url: '/programs', location: 'header', sort_order: 40 },
+  { label: 'Galeri', url: '/gallery', location: 'header', sort_order: 50 },
+  { label: 'Testimoni', url: '/testimonials', location: 'header', sort_order: 60 },
+  { label: 'Blog / Artikel', url: '/blog', location: 'header', sort_order: 70 },
+  { label: 'Penawaran', url: '/penawaran', location: 'header', sort_order: 80 }
+];
+
+async function togglePublish(item) {
+  const nextValue = item.is_published ? 0 : 1;
+  item.is_published = nextValue;
+  try {
+    await api(`/admin/navigation/${item.id}`, { method: 'PUT', body: item });
+    showNotice(`Menu "${item.label}" ${nextValue ? 'ditayangkan (On)' : 'disembunyikan (Off)'}.`);
+    notifyCmsChange('navigation');
+  } catch (error) {
+    item.is_published = nextValue ? 0 : 1;
+    showNotice(error.message, 'danger');
+  }
+}
+
+async function addPresetNav(preset) {
+  try {
+    await api('/admin/navigation', {
+      method: 'POST',
+      body: { ...preset, target: '_self', is_published: 1 }
+    });
+    showNotice(`Menu "${preset.label}" (${preset.url}) berhasil ditambahkan.`);
+    notifyCmsChange('navigation');
+    await selectPage('navigation');
+  } catch (error) {
+    showNotice(error.message, 'danger');
+  }
 }
 
 async function saveSection(section) {
@@ -428,6 +572,7 @@ async function saveSection(section) {
   try {
     await api(`/admin/sections/${section.id}`, { method: 'PUT', body: section });
     showNotice(`Section ${section.name} disimpan.`);
+    notifyCmsChange('sections');
   } catch (error) { showNotice(error.message, 'danger'); }
   finally {
     const next = new Set(savingSections.value);
@@ -442,6 +587,7 @@ async function saveSettings() {
   try {
     await api('/admin/settings', { method: 'PUT', body: settings.value });
     showNotice('Pengaturan berhasil disimpan.');
+    notifyCmsChange('settings');
   } catch (error) { showNotice(error.message, 'danger'); }
   finally { savingSettings.value = false; }
 }
@@ -565,13 +711,20 @@ onMounted(async () => {
         <template v-else-if="active === 'sections'">
           <div class="mb-3"><p class="text-muted mb-0">Atur judul, isi, visibilitas, dan urutan section landing page. Urutan kecil tampil lebih dahulu.</p></div>
           <div class="d-grid gap-3">
-            <div v-for="section in sections" :key="section.id" class="admin-card">
-              <div class="d-flex justify-content-between align-items-center mb-3"><h2 class="h5 mb-0">{{ section.name }} <code>{{ section.section_key }}</code></h2><div class="form-check form-switch"><input v-model="section.is_visible" :true-value="1" :false-value="0" class="form-check-input" type="checkbox"><label class="form-check-label">Tayang</label></div></div>
+            <div v-for="section in sections" :key="section.id" class="admin-card section-accordion-card" :class="{ 'is-open': openSectionId === section.id }">
+              <div class="section-accordion-header">
+                <button type="button" class="section-accordion-toggle" :aria-expanded="openSectionId === section.id" @click="toggleSection(section.id)">
+                  <span><strong>{{ section.name }}</strong> <code>{{ section.section_key }}</code><small>{{ section.title || 'Belum ada judul' }}</small></span>
+                  <i class="bi" :class="openSectionId === section.id ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
+                </button>
+                <div class="form-check form-switch mb-0"><input v-model="section.is_visible" :true-value="1" :false-value="0" class="form-check-input" type="checkbox" @click.stop><label class="form-check-label">Tayang</label></div>
+              </div>
+              <div v-if="openSectionId === section.id" class="section-accordion-content">
               <div class="admin-form-grid">
-                <label><span class="admin-label">Eyebrow</span><input v-model="section.eyebrow" class="admin-input"></label>
+                <label><span class="admin-label admin-label-with-settings">Eyebrow <details class="field-style-settings"><summary title="Atur font, warna, ukuran, margin dan padding label"><i class="bi bi-sliders"></i></summary><div class="field-style-panel"><label>Warna<div class="color-control"><input type="color" :value="section.config.style.eyebrow_color || '#c41e3a'" @input="section.config.style.eyebrow_color=$event.target.value"><input v-model="section.config.style.eyebrow_color" class="admin-input"><button type="button" class="btn btn-light btn-sm" @click="section.config.style.eyebrow_color=''">Reset</button></div></label><label>Font<select v-model="section.config.style.eyebrow_font_family" class="admin-input"><option value="">Bawaan template</option><option>Manrope</option><option>Inter</option><option>Outfit</option><option>Poppins</option><option>Montserrat</option><option>Roboto</option><option>Playfair Display</option></select></label><label>Ukuran desktop<input v-model.number="section.config.style.eyebrow_size_desktop" type="number" min="10" max="32" class="admin-input"></label><label>Ukuran mobile<input v-model.number="section.config.style.eyebrow_size_mobile" type="number" min="10" max="24" class="admin-input"></label><label>Margin desktop (atas/bawah)<input v-model.number="section.config.style.eyebrow_margin_desktop" type="number" min="0" max="160" class="admin-input"></label><label>Margin mobile (atas/bawah)<input v-model.number="section.config.style.eyebrow_margin_mobile" type="number" min="0" max="120" class="admin-input"></label><label>Padding desktop (atas/bawah)<input v-model.number="section.config.style.eyebrow_padding_desktop" type="number" min="0" max="160" class="admin-input"></label><label>Padding mobile (atas/bawah)<input v-model.number="section.config.style.eyebrow_padding_mobile" type="number" min="0" max="120" class="admin-input"></label><div class="field-style-save"><button type="button" class="btn btn-danger btn-sm" :disabled="savingSections.has(section.id)" @click="saveSection(section)"><i class="bi bi-check2 me-1"></i>Simpan pengaturan</button></div></div></details></span><input v-model="section.eyebrow" class="admin-input"></label>
                 <label><span class="admin-label">Urutan</span><input v-model.number="section.sort_order" type="number" class="admin-input"></label>
-                <label class="full"><span class="admin-label">Judul</span><input v-model="section.title" class="admin-input"></label>
-                <label class="full"><span class="admin-label">Subtitle / Deskripsi</span><textarea v-model="section.subtitle" class="admin-input"></textarea></label>
+                <label class="full"><span class="admin-label admin-label-with-settings">Judul <details class="field-style-settings"><summary title="Atur font, warna, ukuran, margin dan padding judul"><i class="bi bi-sliders"></i></summary><div class="field-style-panel"><label>Warna<div class="color-control"><input type="color" :value="section.config.style.heading_color || '#111827'" @input="section.config.style.heading_color=$event.target.value"><input v-model="section.config.style.heading_color" class="admin-input"><button type="button" class="btn btn-light btn-sm" @click="section.config.style.heading_color=''">Reset</button></div></label><label>Font<select v-model="section.config.style.title_font_family" class="admin-input"><option value="">Bawaan template</option><option>Manrope</option><option>Inter</option><option>Outfit</option><option>Poppins</option><option>Montserrat</option><option>Roboto</option><option>Playfair Display</option></select></label><label>Ukuran desktop<input v-model.number="section.config.style.title_size_desktop" type="number" min="18" max="100" class="admin-input"></label><label>Ukuran mobile<input v-model.number="section.config.style.title_size_mobile" type="number" min="18" max="64" class="admin-input"></label><label>Margin desktop (atas/bawah)<input v-model.number="section.config.style.title_margin_desktop" type="number" min="0" max="160" class="admin-input"></label><label>Margin mobile (atas/bawah)<input v-model.number="section.config.style.title_margin_mobile" type="number" min="0" max="120" class="admin-input"></label><label>Padding desktop (atas/bawah)<input v-model.number="section.config.style.title_padding_desktop" type="number" min="0" max="160" class="admin-input"></label><label>Padding mobile (atas/bawah)<input v-model.number="section.config.style.title_padding_mobile" type="number" min="0" max="120" class="admin-input"></label><div class="field-style-save"><button type="button" class="btn btn-danger btn-sm" :disabled="savingSections.has(section.id)" @click="saveSection(section)"><i class="bi bi-check2 me-1"></i>Simpan pengaturan</button></div></div></details></span><input v-model="section.title" class="admin-input"></label>
+                <label class="full"><span class="admin-label admin-label-with-settings">Subtitle / Deskripsi <details class="field-style-settings"><summary title="Atur font, warna, ukuran, margin dan padding deskripsi"><i class="bi bi-sliders"></i></summary><div class="field-style-panel"><label>Warna<div class="color-control"><input type="color" :value="section.config.style.text_color || '#475569'" @input="section.config.style.text_color=$event.target.value"><input v-model="section.config.style.text_color" class="admin-input"><button type="button" class="btn btn-light btn-sm" @click="section.config.style.text_color=''">Reset</button></div></label><label>Font<select v-model="section.config.style.subtitle_font_family" class="admin-input"><option value="">Bawaan template</option><option>Manrope</option><option>Inter</option><option>Outfit</option><option>Poppins</option><option>Montserrat</option><option>Roboto</option><option>Playfair Display</option></select></label><label>Ukuran desktop<input v-model.number="section.config.style.text_size_desktop" type="number" min="12" max="32" class="admin-input"></label><label>Ukuran mobile<input v-model.number="section.config.style.text_size_mobile" type="number" min="12" max="28" class="admin-input"></label><label>Margin desktop (atas/bawah)<input v-model.number="section.config.style.subtitle_margin_desktop" type="number" min="0" max="160" class="admin-input"></label><label>Margin mobile (atas/bawah)<input v-model.number="section.config.style.subtitle_margin_mobile" type="number" min="0" max="120" class="admin-input"></label><label>Padding desktop (atas/bawah)<input v-model.number="section.config.style.subtitle_padding_desktop" type="number" min="0" max="160" class="admin-input"></label><label>Padding mobile (atas/bawah)<input v-model.number="section.config.style.subtitle_padding_mobile" type="number" min="0" max="120" class="admin-input"></label><div class="field-style-save"><button type="button" class="btn btn-danger btn-sm" :disabled="savingSections.has(section.id)" @click="saveSection(section)"><i class="bi bi-check2 me-1"></i>Simpan pengaturan</button></div></div></details></span><textarea v-model="section.subtitle" class="admin-input"></textarea></label>
                 <template v-if="section.section_key === 'hero'">
                   <label class="full"><span class="admin-label">Gambar Hero</span><input v-model="section.config.image_url" class="admin-input"><span class="quick-upload mt-2"><i class="bi bi-cloud-arrow-up"></i> Upload & konversi WebP<input type="file" accept="image/*" @change="uploadFile($event, section.config, 'image_url')"></span></label>
                   <label><span class="admin-label">Tombol Utama</span><input v-model="section.config.primary_button" class="admin-input"></label>
@@ -581,26 +734,122 @@ onMounted(async () => {
                 <template v-if="section.section_key === 'clients'">
                   <label><span class="admin-label">Mode Tampilan Logo</span><select v-model="section.config.display_mode" class="admin-input"><option value="masonry">Masonry Responsive</option><option value="scroll">Slider Mobile</option></select></label>
                   <label><span class="admin-label">Tinggi Slider Mobile (px)</span><input v-model.number="section.config.scroll_height" type="number" min="160" max="420" class="admin-input"></label>
+                  <label><span class="admin-label">Jumlah Logo di Landing</span><input v-model.number="section.config.display_limit" type="number" min="1" max="100" class="admin-input"></label>
+                  <label><span class="admin-label">Urutan Logo</span><select v-model="section.config.sort_mode" class="admin-input"><option value="latest">Terbaru diupload</option><option value="order">Urutan admin</option><option value="random">Acak setiap muat</option></select></label>
+                  <label><span class="admin-label">Teks Tombol Halaman Klien</span><input v-model="section.config.action_button_label" class="admin-input"></label>
+                  <label><span class="admin-label">URL Halaman Klien</span><input v-model="section.config.action_button_url" class="admin-input"></label>
                 </template>
                 <label><span class="admin-label">Label Sitelink</span><input v-model="section.config.sitelink_label" class="admin-input" :placeholder="section.name"></label>
                 <label><span class="admin-label">Aktifkan Sitelink Schema</span><span class="form-check form-switch pt-2"><input v-model="section.config.sitelink_enabled" :true-value="1" :false-value="0" class="form-check-input" type="checkbox"></span></label>
               </div>
               <details class="section-style-editor mt-4">
-                <summary><i class="bi bi-palette me-2"></i>Warna, Font, Posisi & Ukuran Responsif</summary>
-                <div class="admin-form-grid mt-3">
-                  <label><span class="admin-label">Warna Background</span><div class="color-control"><input type="color" :value="section.config.style.background_color || '#ffffff'" @input="section.config.style.background_color=$event.target.value"><input v-model="section.config.style.background_color" class="admin-input" placeholder="Kosong = bawaan template"><button type="button" class="btn btn-light btn-sm" @click="section.config.style.background_color=''">Reset</button></div></label>
-                  <label><span class="admin-label">Warna Teks</span><div class="color-control"><input type="color" :value="section.config.style.text_color || '#334155'" @input="section.config.style.text_color=$event.target.value"><input v-model="section.config.style.text_color" class="admin-input" placeholder="Kosong = bawaan template"><button type="button" class="btn btn-light btn-sm" @click="section.config.style.text_color=''">Reset</button></div></label>
-                  <label><span class="admin-label">Warna Judul</span><div class="color-control"><input type="color" :value="section.config.style.heading_color || '#111827'" @input="section.config.style.heading_color=$event.target.value"><input v-model="section.config.style.heading_color" class="admin-input" placeholder="Kosong = bawaan template"><button type="button" class="btn btn-light btn-sm" @click="section.config.style.heading_color=''">Reset</button></div></label>
-                  <label><span class="admin-label">Jenis Font</span><select v-model="section.config.style.font_family" class="admin-input"><option value="">Bawaan template</option><option>Manrope</option><option>Arial</option><option>Georgia</option><option>Verdana</option><option>Tahoma</option><option>Trebuchet MS</option></select></label>
-                  <label><span class="admin-label">Posisi Teks</span><select v-model="section.config.style.text_align" class="admin-input"><option value="">Bawaan template</option><option value="left">Kiri</option><option value="center">Tengah</option><option value="right">Kanan</option></select></label>
+                <summary><i class="bi bi-type me-2"></i>Pengaturan Tipografi Lengkap (opsional)</summary>
+                <p class="small fw-semibold text-muted mt-3 mb-2">Label / Eyebrow</p>
+                <div class="admin-form-grid">
+                  <label><span class="admin-label">Warna Label</span><div class="color-control"><input type="color" :value="section.config.style.eyebrow_color || '#c41e3a'" @input="section.config.style.eyebrow_color=$event.target.value"><input v-model="section.config.style.eyebrow_color" class="admin-input" placeholder="Kosong = bawaan"><button type="button" class="btn btn-light btn-sm" @click="section.config.style.eyebrow_color=''">Reset</button></div></label>
+                  <label><span class="admin-label">Font Label</span><select v-model="section.config.style.eyebrow_font_family" class="admin-input"><option value="">Bawaan template</option><option>Manrope</option><option>Inter</option><option>Outfit</option><option>Poppins</option><option>Raleway</option><option>Montserrat</option><option>Oswald</option><option>Lato</option><option>Open Sans</option><option>Roboto</option><option>Georgia</option><option>Playfair Display</option></select></label>
+                  <label><span class="admin-label">Ukuran Label Desktop (px)</span><input v-model.number="section.config.style.eyebrow_size_desktop" type="number" min="10" max="32" class="admin-input" placeholder="Bawaan (12)"></label>
+                  <label><span class="admin-label">Ukuran Label Mobile (px)</span><input v-model.number="section.config.style.eyebrow_size_mobile" type="number" min="10" max="24" class="admin-input" placeholder="Bawaan (11)"></label>
+                </div>
+                <p class="small fw-semibold text-muted mt-3 mb-2">Judul (Heading)</p>
+                <div class="admin-form-grid">
+                  <label><span class="admin-label">Warna Judul</span><div class="color-control"><input type="color" :value="section.config.style.heading_color || '#111827'" @input="section.config.style.heading_color=$event.target.value"><input v-model="section.config.style.heading_color" class="admin-input" placeholder="Kosong = bawaan"><button type="button" class="btn btn-light btn-sm" @click="section.config.style.heading_color=''">Reset</button></div></label>
+                  <label><span class="admin-label">Font Judul</span><select v-model="section.config.style.title_font_family" class="admin-input"><option value="">Bawaan template</option><option>Manrope</option><option>Inter</option><option>Outfit</option><option>Poppins</option><option>Raleway</option><option>Montserrat</option><option>Oswald</option><option>Lato</option><option>Open Sans</option><option>Roboto</option><option>Georgia</option><option>Playfair Display</option></select></label>
                   <label><span class="admin-label">Ukuran Judul Desktop (px)</span><input v-model.number="section.config.style.title_size_desktop" type="number" min="18" max="100" class="admin-input" placeholder="Bawaan"></label>
                   <label><span class="admin-label">Ukuran Judul Mobile (px)</span><input v-model.number="section.config.style.title_size_mobile" type="number" min="18" max="64" class="admin-input" placeholder="Bawaan"></label>
-                  <label><span class="admin-label">Ukuran Teks Desktop (px)</span><input v-model.number="section.config.style.text_size_desktop" type="number" min="12" max="32" class="admin-input" placeholder="Bawaan"></label>
-                  <label><span class="admin-label">Ukuran Teks Mobile (px)</span><input v-model.number="section.config.style.text_size_mobile" type="number" min="12" max="28" class="admin-input" placeholder="Bawaan"></label>
+                </div>
+                <p class="small fw-semibold text-muted mt-3 mb-2">Deskripsi / Subtitle</p>
+                <div class="admin-form-grid">
+                  <label><span class="admin-label">Warna Deskripsi</span><div class="color-control"><input type="color" :value="section.config.style.text_color || '#475569'" @input="section.config.style.text_color=$event.target.value"><input v-model="section.config.style.text_color" class="admin-input" placeholder="Kosong = bawaan"><button type="button" class="btn btn-light btn-sm" @click="section.config.style.text_color=''">Reset</button></div></label>
+                  <label><span class="admin-label">Font Deskripsi</span><select v-model="section.config.style.subtitle_font_family" class="admin-input"><option value="">Bawaan template</option><option>Manrope</option><option>Inter</option><option>Outfit</option><option>Poppins</option><option>Raleway</option><option>Montserrat</option><option>Lato</option><option>Open Sans</option><option>Roboto</option><option>Georgia</option><option>Playfair Display</option></select></label>
+                  <label><span class="admin-label">Ukuran Deskripsi Desktop (px)</span><input v-model.number="section.config.style.text_size_desktop" type="number" min="12" max="32" class="admin-input" placeholder="Bawaan"></label>
+                  <label><span class="admin-label">Ukuran Deskripsi Mobile (px)</span><input v-model.number="section.config.style.text_size_mobile" type="number" min="12" max="28" class="admin-input" placeholder="Bawaan"></label>
+                </div>
+                <p class="small fw-semibold text-muted mt-3 mb-2">Global Section (override semua elemen)</p>
+                <div class="admin-form-grid">
+                  <label><span class="admin-label">Warna Background</span><div class="color-control"><input type="color" :value="section.config.style.background_color || '#ffffff'" @input="section.config.style.background_color=$event.target.value"><input v-model="section.config.style.background_color" class="admin-input" placeholder="Kosong = bawaan template"><button type="button" class="btn btn-light btn-sm" @click="section.config.style.background_color=''">Reset</button></div></label>
+                  <label><span class="admin-label">Font Global Section</span><select v-model="section.config.style.font_family" class="admin-input"><option value="">Bawaan template</option><option>Manrope</option><option>Inter</option><option>Outfit</option><option>Poppins</option><option>Raleway</option><option>Montserrat</option><option>Lato</option><option>Open Sans</option><option>Roboto</option><option>Georgia</option><option>Playfair Display</option></select></label>
+                  <label><span class="admin-label">Posisi Teks</span><select v-model="section.config.style.text_align" class="admin-input"><option value="">Bawaan template</option><option value="left">Kiri</option><option value="center">Tengah</option><option value="right">Kanan</option></select></label>
                   <label><span class="admin-label">Padding Atas/Bawah Desktop (px)</span><input v-model.number="section.config.style.padding_desktop" type="number" min="0" max="300" class="admin-input" placeholder="Bawaan"></label>
                   <label><span class="admin-label">Padding Atas/Bawah Mobile (px)</span><input v-model.number="section.config.style.padding_mobile" type="number" min="0" max="200" class="admin-input" placeholder="Bawaan"></label>
                 </div>
-                <p class="small text-muted mt-3 mb-0">Ukuran mobile diterapkan otomatis pada layar sampai 576px. Nilai kosong mempertahankan desain template.</p>
+                <p class="small text-muted mt-3 mb-0">Nilai kosong mempertahankan desain template. Eyebrow = teks kecil di atas judul. Font per-elemen lebih prioritas dari Font Global.</p>
+              </details>
+              <details class="section-style-editor mt-4">
+                <summary><i class="bi bi-palette me-2"></i>Tampilan Tombol Aksi</summary>
+                <p class="small text-muted mt-3 mb-2">Berlaku untuk tombol aksi utama pada section ini. Nilai kosong mempertahankan tampilan bawaan.</p>
+                <div class="admin-form-grid">
+                  <label><span class="admin-label">Varian Tombol</span><select v-model="section.config.style.button_variant" class="admin-input"><option value="">Bawaan template</option><option value="outline">Outline</option><option value="solid">Solid / Berisi</option></select></label>
+                  <label><span class="admin-label">Warna Latar</span><div class="color-control"><input type="color" :value="section.config.style.button_background_color || '#c41e3a'" @input="section.config.style.button_background_color=$event.target.value"><input v-model="section.config.style.button_background_color" class="admin-input" placeholder="Kosong = bawaan"><button type="button" class="btn btn-light btn-sm" @click="section.config.style.button_background_color=''">Reset</button></div></label>
+                  <label><span class="admin-label">Warna Teks</span><div class="color-control"><input type="color" :value="section.config.style.button_text_color || '#c41e3a'" @input="section.config.style.button_text_color=$event.target.value"><input v-model="section.config.style.button_text_color" class="admin-input" placeholder="Kosong = bawaan"><button type="button" class="btn btn-light btn-sm" @click="section.config.style.button_text_color=''">Reset</button></div></label>
+                  <label><span class="admin-label">Warna Border</span><div class="color-control"><input type="color" :value="section.config.style.button_border_color || '#c41e3a'" @input="section.config.style.button_border_color=$event.target.value"><input v-model="section.config.style.button_border_color" class="admin-input" placeholder="Kosong = bawaan"><button type="button" class="btn btn-light btn-sm" @click="section.config.style.button_border_color=''">Reset</button></div></label>
+                  <label><span class="admin-label">Font Tombol</span><select v-model="section.config.style.button_font_family" class="admin-input"><option value="">Bawaan template</option><option>Manrope</option><option>Inter</option><option>Outfit</option><option>Poppins</option><option>Raleway</option><option>Montserrat</option><option>Oswald</option><option>Lato</option><option>Open Sans</option><option>Roboto</option><option>Georgia</option><option>Playfair Display</option></select></label>
+                  <label><span class="admin-label">Ukuran Tombol Desktop (px)</span><input v-model.number="section.config.style.button_font_size_desktop" type="number" min="10" max="32" class="admin-input" placeholder="Bawaan"></label>
+                  <label><span class="admin-label">Ukuran Tombol Mobile (px)</span><input v-model.number="section.config.style.button_font_size_mobile" type="number" min="10" max="28" class="admin-input" placeholder="Bawaan"></label>
+                </div>
+              </details>
+              <details class="section-style-editor mt-4">
+                <summary><i class="bi bi-cursor me-2"></i>Tombol Aksi Section</summary>
+                <div class="admin-form-grid mt-3">
+                  <template v-if="['stats'].includes(section.section_key)">
+                    <label class="full"><span class="admin-label">Label Tombol</span><input v-model="section.config.about_button_label" class="admin-input" placeholder="Selengkapnya Tentang Kami"></label>
+                    <label class="full"><span class="admin-label">URL Tombol</span><input v-model="section.config.about_button_url" class="admin-input" placeholder="/about"></label>
+                  </template>
+                  <template v-else-if="['contact'].includes(section.section_key)">
+                    <label class="full"><span class="admin-label">Judul Form Konsultasi</span><input v-model="section.config.form_title" class="admin-input" placeholder="Request Konsultasi"></label>
+                    <label><span class="admin-label">Label WhatsApp</span><input v-model="section.config.whatsapp_label" class="admin-input"></label>
+                    <label><span class="admin-label">Label Telepon</span><input v-model="section.config.phone_label" class="admin-input"></label>
+                    <label><span class="admin-label">Label Email</span><input v-model="section.config.email_label" class="admin-input"></label>
+                    <label><span class="admin-label">Label Alamat</span><input v-model="section.config.address_label" class="admin-input"></label>
+                    <label><span class="admin-label">Tampilkan WhatsApp</span><span class="form-check form-switch pt-2"><input v-model="section.config.show_whatsapp" :true-value="1" :false-value="0" class="form-check-input" type="checkbox"></span></label>
+                    <label><span class="admin-label">Tampilkan Telepon</span><span class="form-check form-switch pt-2"><input v-model="section.config.show_phone" :true-value="1" :false-value="0" class="form-check-input" type="checkbox"></span></label>
+                    <label><span class="admin-label">Tampilkan Email</span><span class="form-check form-switch pt-2"><input v-model="section.config.show_email" :true-value="1" :false-value="0" class="form-check-input" type="checkbox"></span></label>
+                    <label><span class="admin-label">Tampilkan Alamat</span><span class="form-check form-switch pt-2"><input v-model="section.config.show_address" :true-value="1" :false-value="0" class="form-check-input" type="checkbox"></span></label>
+                    <label><span class="admin-label">Label Nama</span><input v-model="section.config.name_label" class="admin-input"></label>
+                    <label><span class="admin-label">Label No. WhatsApp</span><input v-model="section.config.whatsapp_field_label" class="admin-input"></label>
+                    <label><span class="admin-label">Label Perusahaan</span><input v-model="section.config.company_label" class="admin-input"></label>
+                    <label><span class="admin-label">Label Jabatan</span><input v-model="section.config.position_label" class="admin-input"></label>
+                    <label><span class="admin-label">Label Kebutuhan Training</span><input v-model="section.config.program_label" class="admin-input"></label>
+                    <label><span class="admin-label">Placeholder Program</span><input v-model="section.config.program_placeholder" class="admin-input"></label>
+                    <label><span class="admin-label">Label Jumlah Peserta</span><input v-model="section.config.participants_label" class="admin-input"></label>
+                    <label><span class="admin-label">Label Estimasi Waktu</span><input v-model="section.config.timeline_label" class="admin-input"></label>
+                    <label><span class="admin-label">Label Pesan</span><input v-model="section.config.message_label" class="admin-input"></label>
+                    <label><span class="admin-label">Teks Tombol Kirim</span><input v-model="section.config.submit_label" class="admin-input"></label>
+                    <label><span class="admin-label">Teks Saat Mengirim</span><input v-model="section.config.submitting_label" class="admin-input"></label>
+                    <label class="full"><span class="admin-label">Pilihan Jumlah Peserta</span><textarea :value="section.config.participant_options?.join('\n')" class="admin-input" @input="section.config.participant_options=$event.target.value.split('\n').map(x=>x.trim()).filter(Boolean)"></textarea><small class="text-muted">Satu pilihan per baris.</small></label>
+                    <label class="full"><span class="admin-label">Pilihan Estimasi Waktu</span><textarea :value="section.config.timeline_options?.join('\n')" class="admin-input" @input="section.config.timeline_options=$event.target.value.split('\n').map(x=>x.trim()).filter(Boolean)"></textarea><small class="text-muted">Satu pilihan per baris.</small></label>
+                  </template>
+                  <template v-else-if="['cta'].includes(section.section_key)">
+                    <label class="full"><span class="admin-label">Label Tombol CTA</span><input v-model="section.config.button_label" class="admin-input" placeholder="Hubungi Kami Sekarang"></label>
+                  </template>
+                  <template v-else-if="['features'].includes(section.section_key)">
+                    <label class="full"><span class="admin-label">Label Tombol</span><input v-model="section.config.action_button_label" class="admin-input" placeholder="Konsultasi Gratis"></label>
+                    <label class="full"><span class="admin-label">URL / Anchor Tombol</span><input v-model="section.config.action_button_url" class="admin-input" placeholder="#kontak"></label>
+                  </template>
+                  <template v-else-if="['programs','galleries','testimonials','posts'].includes(section.section_key)">
+                    <label class="full"><span class="admin-label">Label Tombol</span><input v-model="section.config.action_button_label" class="admin-input" :placeholder="{ programs: 'Lihat Semua Program', galleries: 'Lihat Semua Foto', testimonials: 'Lihat Semua Testimoni', posts: 'Semua Artikel' }[section.section_key]"></label>
+                    <label class="full"><span class="admin-label">URL Tombol</span><input v-model="section.config.action_button_url" class="admin-input" :placeholder="{ programs: '/programs', galleries: '/gallery', testimonials: '/testimonials', posts: '/blog' }[section.section_key]"></label>
+                  </template>
+                  <template v-if="section.section_key === 'programs'">
+                    <label><span class="admin-label">Filter Semua</span><input v-model="section.config.filter_all_label" class="admin-input"></label>
+                    <label><span class="admin-label">Tombol Detail Kartu</span><input v-model="section.config.card_detail_label" class="admin-input"></label>
+                    <label><span class="admin-label">Tombol Tanya Kartu</span><input v-model="section.config.card_inquiry_label" class="admin-input"></label>
+                    <label><span class="admin-label">Tombol Flyer Kartu</span><input v-model="section.config.card_flyer_label" class="admin-input"></label>
+                    <label><span class="admin-label">Tombol Detail Hero</span><input v-model="section.config.hero_detail_label" class="admin-input"></label>
+                    <label><span class="admin-label">Tombol Tanya Hero</span><input v-model="section.config.hero_inquiry_label" class="admin-input"></label>
+                    <label><span class="admin-label">Aksi Slider Hero</span><input v-model="section.config.hero_display_label" class="admin-input"></label>
+                  </template>
+                  <template v-if="section.section_key === 'posts'">
+                    <label><span class="admin-label">Tautan Baca Artikel</span><input v-model="section.config.read_more_label" class="admin-input"></label>
+                  </template>
+                  <template v-if="section.section_key === 'trainers'">
+                    <label><span class="admin-label">Label Navigasi Sebelumnya</span><input v-model="section.config.previous_label" class="admin-input"></label>
+                    <label><span class="admin-label">Label Navigasi Berikutnya</span><input v-model="section.config.next_label" class="admin-input"></label>
+                  </template>
+                  <template v-else>
+                    <p class="small text-muted mb-0">Section ini tidak memiliki tombol aksi terpisah yang bisa dikonfigurasi.</p>
+                  </template>
+                </div>
               </details>
               <details class="section-style-editor mt-4">
                 <summary><i class="bi bi-arrows-expand me-2"></i>Jarak Antar Section & Divider Modern</summary>
@@ -641,6 +890,102 @@ onMounted(async () => {
                 <p class="small text-muted mt-3 mb-0">Hero otomatis memakai particles jika nilai section masih bawaan. Section lain bisa diaktifkan manual dari sini.</p>
               </details>
               <div class="text-end mt-3"><button class="btn btn-danger" :disabled="savingSections.has(section.id)" @click="saveSection(section)"><span v-if="savingSections.has(section.id)" class="spinner-border spinner-border-sm me-2"></span>{{ savingSections.has(section.id) ? 'Menyimpan...' : 'Simpan Section' }}</button></div>
+              </div>
+            </div>
+          </div>
+        </template>
+
+        <template v-else-if="active === 'navigation'">
+          <div class="admin-card mb-4">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+              <div>
+                <h2 class="h5 mb-1"><i class="bi bi-compass me-2 text-danger"></i>Struktur Menu Navigasi Header Publik</h2>
+                <p class="text-muted small mb-0">
+                  Daftar tautan navigasi yang tampil pada header dan footer website publik. Gunakan sakelar <strong>On/Off Tayang</strong> untuk mengaktifkan atau menyembunyikan menu secara langsung tanpa membuka modal edit.
+                </p>
+              </div>
+              <button class="btn btn-danger" @click="openCreate"><i class="bi bi-plus-lg me-1"></i>Tambah Menu Custom</button>
+            </div>
+
+            <div class="p-3 bg-light rounded-3 border mb-3">
+              <small class="d-block text-muted fw-bold mb-2"><i class="bi bi-magic me-1"></i>Tambah Cepat Preset Menu Halaman Utama:</small>
+              <div class="d-flex flex-wrap gap-2">
+                <button
+                  v-for="preset in navPresets"
+                  :key="preset.url"
+                  type="button"
+                  class="btn btn-sm"
+                  :class="records.some(r => r.url === preset.url) ? 'btn-outline-secondary disabled' : 'btn-outline-primary'"
+                  :disabled="records.some(r => r.url === preset.url)"
+                  @click="addPresetNav(preset)"
+                >
+                  <i class="bi" :class="records.some(r => r.url === preset.url) ? 'bi-check2' : 'bi-plus-circle'"></i>
+                  {{ preset.label }} (<code>{{ preset.url }}</code>)
+                </button>
+              </div>
+            </div>
+
+            <div class="admin-table-wrap">
+              <table class="admin-table">
+                <thead>
+                  <tr>
+                    <th style="width: 70px;">Urutan</th>
+                    <th>Label Menu</th>
+                    <th>URL & Preview Halaman</th>
+                    <th>Lokasi</th>
+                    <th style="width: 150px;">Status Tayang</th>
+                    <th class="text-end" style="width: 120px;">Aksi</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="item in records" :key="item.id">
+                    <td>
+                      <span class="badge text-bg-light border">{{ item.sort_order }}</span>
+                    </td>
+                    <td>
+                      <strong>{{ item.label }}</strong>
+                      <small v-if="item.target === '_blank'" class="d-block text-muted">Buka di tab baru</small>
+                    </td>
+                    <td>
+                      <code class="me-2">{{ item.url }}</code>
+                      <a
+                        :href="item.url"
+                        target="_blank"
+                        class="btn btn-sm btn-light border text-primary"
+                        title="Buka & lihat halaman ini di tab baru"
+                      >
+                        <i class="bi bi-box-arrow-up-right me-1"></i>Buka Halaman
+                      </a>
+                    </td>
+                    <td>
+                      <span class="badge" :class="item.location === 'header' ? 'text-bg-danger' : 'text-bg-dark'">
+                        {{ item.location || 'header' }}
+                      </span>
+                    </td>
+                    <td>
+                      <div class="form-check form-switch pt-1">
+                        <input
+                          class="form-check-input"
+                          type="checkbox"
+                          role="switch"
+                          :checked="Boolean(item.is_published)"
+                          @change="togglePublish(item)"
+                        >
+                        <label class="form-check-label fw-bold ms-1" :class="item.is_published ? 'text-success' : 'text-muted'">
+                          {{ item.is_published ? 'Tayang' : 'Off' }}
+                        </label>
+                      </div>
+                    </td>
+                    <td class="text-end">
+                      <button class="btn btn-sm btn-outline-primary me-1" @click="openEdit(item)"><i class="bi bi-pencil"></i></button>
+                      <button class="btn btn-sm btn-outline-danger" @click="removeRecord(item)"><i class="bi bi-trash"></i></button>
+                    </td>
+                  </tr>
+                  <tr v-if="!records.length">
+                    <td colspan="6" class="text-center text-muted py-5">Belum ada item navigasi. Silakan klik preset di atas atau tambah manual.</td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
           </div>
         </template>
@@ -655,20 +1000,58 @@ onMounted(async () => {
           <div v-if="active === 'service_items'" class="alert alert-info">
             <strong>Cover layanan:</strong> upload gambar di field Cover Gambar. Sistem otomatis menyimpan source asli dan versi WebP teroptimasi quality 80 untuk tampilan website.
           </div>
+          <div v-if="active === 'service_pages'" class="alert alert-info d-flex flex-wrap align-items-center justify-content-between gap-3">
+            <span><strong>Konten halaman layanan:</strong> atur judul, deskripsi, dan SEO di sini. Untuk menambah atau mengubah kartu layanan yang tampil di halaman publik, buka pengelolaan Item Layanan.</span>
+            <button class="btn btn-danger btn-sm text-nowrap" @click="selectPage('service_items')"><i class="bi bi-briefcase me-1"></i>Kelola Item Layanan</button>
+          </div>
+          <div v-if="active === 'client_pages'" class="alert alert-info d-flex flex-wrap align-items-center justify-content-between gap-3">
+            <span><strong>Halaman Klien:</strong> atur judul dan SEO halaman di sini. Logo klien juga dikelola dari halaman ini agar navigasi Dashboard tetap sederhana.</span>
+            <button class="btn btn-danger btn-sm text-nowrap" @click="selectPage('clients')"><i class="bi bi-building me-1"></i>Kelola Logo Klien</button>
+          </div>
+          <div v-if="active === 'clients'" class="alert alert-info d-flex flex-wrap align-items-center justify-content-between gap-3">
+            <span><strong>Logo Klien:</strong> kelola logo yang tampil di halaman publik. Gunakan Bulk JSON bila ingin menambahkan banyak logo dari hasil susunan AI.</span>
+            <button class="btn btn-outline-secondary btn-sm" @click="selectPage('client_pages')"><i class="bi bi-arrow-left me-1"></i>Kembali ke Halaman Klien</button>
+          </div>
+          <div v-if="active === 'galleries'" class="alert alert-info d-flex flex-wrap align-items-center justify-content-between gap-3">
+            <span><strong>Album Galeri:</strong> buat album terlebih dahulu, lalu klik <em>Foto</em> pada album yang dipilih untuk upload dan mengelola isi album. File foto yang dihapus dari album akan dihapus permanen dari penyimpanan.</span>
+            <button class="btn btn-danger btn-sm text-nowrap" @click="openGalleryImages()"><i class="bi bi-images me-1"></i>Kelola Semua Foto</button>
+          </div>
+          <div v-if="active === 'gallery_images'" class="alert alert-info d-flex flex-wrap align-items-center justify-content-between gap-3">
+            <span><strong>Foto Galeri:</strong> pilih nama album pada formulir, bukan ID. Hapus foto akan menghapus data dan file fisik upload terkait.</span>
+            <select v-model="selectedGalleryId" class="form-select form-select-sm" style="max-width:260px"><option value="">Semua album</option><option v-for="album in galleryOptions" :key="album.id" :value="String(album.id)">{{ album.title }}</option></select>
+            <button class="btn btn-outline-secondary btn-sm text-nowrap" @click="selectPage('galleries')"><i class="bi bi-arrow-left me-1"></i>Kembali ke Album</button>
+          </div>
+          <div v-if="active === 'proposal_pages'" class="alert alert-info d-flex flex-wrap align-items-center justify-content-between gap-3">
+            <span><strong>Pusat Proposal:</strong> atur teks dan SEO template di sini, buat proposal per instansi, lalu atur paket yang muncul pada proposal. Semua dikelola dari satu menu sidebar.</span>
+            <div class="d-flex flex-wrap gap-2"><button class="btn btn-danger btn-sm" @click="selectPage('proposals')"><i class="bi bi-file-earmark-plus me-1"></i>Daftar Proposal</button><button class="btn btn-outline-danger btn-sm" @click="selectPage('proposal_packages')"><i class="bi bi-box-seam me-1"></i>Paket Proposal</button></div>
+          </div>
+          <div v-if="active === 'proposal_pages'" class="admin-card mb-4">
+            <div class="d-flex justify-content-between align-items-center gap-2 flex-wrap mb-3"><div><h2 class="h5 mb-1">Preview Proposal</h2><p class="text-muted small mb-0">Preview mengambil tampilan proposal sebenarnya, termasuk header, footer, CTA, dan paket aktif.</p></div><a v-if="previewProposalSlug" :href="proposalUrl(previewProposalSlug)" target="_blank" class="btn btn-outline-primary btn-sm"><i class="bi bi-box-arrow-up-right me-1"></i>Buka tab baru</a></div>
+            <template v-if="proposalOverview.length"><select v-model="previewProposalSlug" class="admin-input mb-3"><option v-for="proposal in proposalOverview" :key="proposal.id" :value="proposal.slug">{{ proposal.institution_name }} — {{ proposal.slug }}</option></select><iframe :key="previewProposalSlug" :src="proposalUrl(previewProposalSlug)" title="Preview proposal" class="proposal-preview-frame"></iframe></template>
+            <p v-else class="text-muted mb-0">Belum ada proposal. Buat proposal pertama melalui tombol <strong>Daftar Proposal</strong> agar preview dapat ditampilkan.</p>
+          </div>
+          <div v-if="active === 'proposals'" class="alert alert-info d-flex flex-wrap align-items-center justify-content-between gap-3">
+            <span><strong>Proposal berbasis slug:</strong> setiap proposal memiliki URL share sendiri dan QR code. Nama Instansi otomatis menjadi slug saat membuat proposal baru; ubah jika diperlukan.</span>
+            <button class="btn btn-outline-secondary btn-sm" @click="selectPage('proposal_pages')"><i class="bi bi-arrow-left me-1"></i>Kembali ke Proposal</button>
+          </div>
+          <div v-if="active === 'proposal_packages'" class="alert alert-info d-flex flex-wrap align-items-center justify-content-between gap-3">
+            <span>Paket di sini tampil dinamis pada seluruh proposal yang tayang. Isi fitur dengan satu baris untuk setiap poin.</span>
+            <button class="btn btn-outline-secondary btn-sm" @click="selectPage('proposal_pages')"><i class="bi bi-arrow-left me-1"></i>Kembali ke Proposal</button>
+          </div>
           <div v-if="active === 'social_proofs'" class="alert alert-info">
             <strong>Template:</strong> isi Nama, Teks Aksi, dan Judul Program/Layanan untuk format seperti "Rina HRD telah membeli paket layanan pelatihan Bimtek & Sertifikasi". Jika Kalimat Custom diisi, kalimat itu yang ditampilkan.
           </div>
-          <div class="d-flex justify-content-between align-items-center gap-2 mb-3"><p class="text-muted mb-0">Kelola {{ currentSchema.title.toLowerCase() }} yang tampil di website.</p><div class="d-flex gap-2"><button v-if="['testimonials','posts','stats'].includes(active)" class="btn btn-outline-primary" @click="openBulk"><i class="bi bi-braces me-1"></i>Bulk JSON</button><button v-if="!['leads','program_orders','about_pages','service_pages','program_pages'].includes(active)" class="btn btn-danger" @click="openCreate"><i class="bi bi-plus-lg me-1"></i>Tambah</button></div></div>
+          <div class="d-flex justify-content-between align-items-center gap-2 mb-3"><p class="text-muted mb-0">Kelola {{ currentSchema.title.toLowerCase() }} yang tampil di website.</p><div class="d-flex gap-2"><button v-if="['testimonials','posts','stats','proposals','proposal_packages','clients'].includes(active)" class="btn btn-outline-primary" @click="openBulk"><i class="bi bi-braces me-1"></i>Bulk JSON</button><button v-if="!['leads','program_orders','about_pages','service_pages','program_pages','consultation_pages','proposal_pages'].includes(active)" class="btn btn-danger" @click="openCreate"><i class="bi bi-plus-lg me-1"></i>Tambah</button></div></div>
           <div class="admin-card admin-table-wrap">
             <table class="admin-table">
               <thead><tr><th>ID</th><th>Nama / Judul</th><th>Status / Info</th><th>Dibuat</th><th class="text-end">Aksi</th></tr></thead>
               <tbody>
-                <tr v-for="item in records" :key="item.id">
+                <tr v-for="item in (active === 'gallery_images' && selectedGalleryId ? records.filter((image) => Number(image.gallery_id) === Number(selectedGalleryId)) : records)" :key="item.id">
                   <td>{{ item.id }}</td>
                   <td><strong>{{ item.title || item.name || item.question || item.label || item.hero_title || item.order_code || item.customer_name || `#${item.id}` }}</strong><small v-if="active === 'stats'" class="d-block text-danger fw-bold">{{ item.prefix }}{{ Number(item.value || 0).toLocaleString('id-ID') }}{{ item.suffix }}</small><small v-if="item.slug || item.whatsapp || item.program_title" class="d-block text-muted">{{ item.slug || item.whatsapp || item.program_title }}</small><small v-if="item.button_url" class="d-block text-muted">{{ item.button_url }}</small><small v-if="item.company || item.confirmation_contact_name" class="d-block text-muted">{{ item.company || item.confirmation_contact_name }}</small><small v-if="item.total_transfer" class="d-block text-danger fw-bold">Transfer: {{ formatCurrency(item.total_transfer) }}</small><a v-if="item.proof_webp_url" :href="item.proof_webp_url" target="_blank" class="small">Bukti transfer</a></td>
                   <td><span v-if="'is_published' in item" class="badge" :class="item.is_published ? 'text-bg-success' : 'text-bg-secondary'">{{ item.is_published ? 'Tayang' : 'Draft' }}</span><span v-else-if="item.status" class="badge text-bg-warning">{{ item.status }}</span><span v-else>{{ item.category || item.location || '-' }}</span></td>
                   <td>{{ item.created_at || '-' }}</td>
-                  <td class="text-end"><button v-if="active === 'program_orders'" class="btn btn-sm btn-outline-danger me-2" @click="openPrintOrder(item)"><i class="bi bi-printer me-1"></i>Cetak</button><button class="btn btn-sm btn-outline-primary me-2" @click="openEdit(item)">Edit</button><button v-if="!['leads','program_orders','about_pages','service_pages','program_pages'].includes(active)" class="btn btn-sm btn-outline-danger" @click="removeRecord(item)">Hapus</button></td>
+                  <td class="text-end"><button v-if="active === 'galleries'" class="btn btn-sm btn-outline-dark me-2" @click="openGalleryImages(item.id)"><i class="bi bi-images me-1"></i>Foto</button><a v-if="active === 'proposals'" :href="proposalUrl(item.slug)" target="_blank" class="btn btn-sm btn-outline-secondary me-2" title="Buka proposal"><i class="bi bi-box-arrow-up-right"></i></a><a v-if="active === 'proposals'" :href="proposalQr(item.slug)" target="_blank" class="btn btn-sm btn-outline-dark me-2" title="Buka QR Code"><i class="bi bi-qr-code"></i></a><button v-if="active === 'program_orders'" class="btn btn-sm btn-outline-danger me-2" @click="openPrintOrder(item)"><i class="bi bi-printer me-1"></i>Cetak</button><button class="btn btn-sm btn-outline-primary me-2" @click="openEdit(item)">Edit</button><button v-if="!['leads','program_orders','about_pages','service_pages','program_pages','consultation_pages','proposal_pages'].includes(active)" class="btn btn-sm btn-outline-danger" @click="removeRecord(item)">Hapus</button></td>
                 </tr>
                 <tr v-if="!records.length"><td colspan="5" class="text-center text-muted py-5">Belum ada data.</td></tr>
               </tbody>
@@ -766,12 +1149,19 @@ onMounted(async () => {
               <div class="wysiwyg-editor" contenteditable="true" v-html="editing[field]" @input="updateRichText(field, $event)"></div>
             </div>
             <select v-else-if="config[1] === 'select'" v-model="editing[field]" class="admin-input"><option v-for="option in config[3]" :key="option" :value="option">{{ option }}</option></select>
+            <select v-else-if="config[1] === 'gallery-select'" v-model="editing[field]" class="admin-input" :required="config[2]"><option value="" disabled>Pilih album galeri</option><option v-for="album in galleryOptions" :key="album.id" :value="album.id">{{ album.title }}</option></select>
             <div v-else-if="config[1] === 'boolean'" class="form-check form-switch pt-2"><input v-model="editing[field]" :true-value="1" :false-value="0" class="form-check-input" type="checkbox"><label class="form-check-label">{{ editing[field] ? 'Ya' : 'Tidak' }}</label></div>
             <div v-else-if="config[1] === 'image'"><input v-model="editing[field]" class="admin-input" :required="config[2]"><span class="quick-upload mt-2"><i class="bi bi-cloud-arrow-up"></i> Upload & konversi WebP<input type="file" accept="image/*" @change="uploadFile($event, editing, field)"></span><img v-if="editing[field]" :src="editing[field]" class="img-thumbnail mt-2" style="max-height:130px" alt=""></div>
             <div v-else-if="config[1] === 'file'"><input v-model="editing[field]" class="admin-input"><span class="quick-upload mt-2"><i class="bi bi-file-earmark-pdf"></i> Upload / ganti PDF<input type="file" accept="application/pdf,.pdf" @change="uploadFile($event, editing, field)"></span><a v-if="editing[field]" :href="editing[field]" target="_blank" class="btn btn-sm btn-outline-danger mt-2"><i class="bi bi-download me-1"></i>Download PDF</a></div>
-            <input v-else v-model="editing[field]" :type="config[1]" class="admin-input" :required="config[2]">
+            <input v-else v-model="editing[field]" :type="config[1]" class="admin-input" :required="config[2]" @input="((active === 'events' && field === 'title') || (active === 'proposals' && field === 'institution_name')) && eventSlugFromTitle()">
           </label>
         </div>
+        <details v-if="['proposals','proposal_packages'].includes(active)" class="section-style-editor mt-4">
+          <summary><i class="bi bi-braces me-2"></i>Isi cepat dari JSON (untuk AI)</summary>
+          <p class="small text-muted mt-3">Salin format berikut ke AI, minta AI mengisi nilainya, lalu tempel JSON hasilnya di sini. Klik Terapkan agar data masuk ke form di atas, kemudian periksa dan simpan.</p>
+          <textarea v-model="proposalJson" class="admin-input json-assistant-input" rows="15" spellcheck="false"></textarea>
+          <div class="d-flex flex-wrap gap-2 mt-2"><button type="button" class="btn btn-outline-secondary btn-sm" @click="proposalJson=proposalJsonExample()"><i class="bi bi-arrow-counterclockwise me-1"></i>Muat Contoh</button><button type="button" class="btn btn-danger btn-sm" @click="applyProposalJson"><i class="bi bi-play-fill me-1"></i>Terapkan JSON ke Form</button></div>
+        </details>
         <div class="d-flex justify-content-end gap-2 mt-4"><button type="button" class="btn btn-light" :disabled="savingRecord" @click="editing=null">Batal</button><button class="btn btn-danger" :disabled="savingRecord"><span v-if="savingRecord" class="spinner-border spinner-border-sm me-2"></span>{{ savingRecord ? 'Menyimpan...' : 'Simpan' }}</button></div>
       </form>
     </div>

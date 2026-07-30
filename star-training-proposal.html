@@ -1,0 +1,1474 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Proposal Penawaran — STAR Training & Consulting</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    /* =============================================
+       TOKEN SYSTEM
+    ============================================= */
+    :root {
+      --navy:       #0A2240;
+      --navy-mid:   #163559;
+      --gold:       #E8A020;
+      --gold-lt:    #FBE9C4;
+      --white:      #FFFFFF;
+      --off-white:  #F7F8FA;
+      --text:       #1A2332;
+      --text-muted: #5A6478;
+      --divider:    #E2E7EF;
+      --green:      #22A05B;
+
+      --font-display: 'Plus Jakarta Sans', sans-serif;
+      --font-body:    'Inter', sans-serif;
+
+      --radius-sm: 8px;
+      --radius-md: 16px;
+      --radius-lg: 24px;
+
+      --shadow-card:  0 4px 20px rgba(10,34,64,0.08);
+      --shadow-hover: 0 8px 32px rgba(10,34,64,0.14);
+
+      --max-width:    1160px;
+      --section-pad:  88px;
+    }
+
+    /* =============================================
+       RESET
+    ============================================= */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: var(--font-body);
+      color: var(--text);
+      background: var(--white);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+    img { max-width: 100%; height: auto; display: block; }
+    a { text-decoration: none; color: inherit; }
+
+    /* =============================================
+       LAYOUT UTILS
+    ============================================= */
+    .container {
+      max-width: var(--max-width);
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+    .section        { padding: var(--section-pad) 0; }
+    .section--dark  { background: var(--navy); color: var(--white); }
+    .section--alt   { background: var(--off-white); }
+
+    /* =============================================
+       EYEBROW LABEL
+    ============================================= */
+    .eyebrow {
+      display: inline-block;
+      font-family: var(--font-display);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 2.5px;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 16px;
+      padding: 6px 14px;
+      background: var(--gold-lt);
+      border-radius: 100px;
+    }
+    .section--dark .eyebrow { background: rgba(232,160,32,0.18); }
+
+    /* =============================================
+       HEADINGS & SECTION HEAD
+    ============================================= */
+    h1, h2, h3, h4 { font-family: var(--font-display); line-height: 1.2; }
+
+    .section-title {
+      font-size: clamp(28px, 4vw, 42px);
+      font-weight: 800;
+      color: var(--navy);
+      margin-bottom: 16px;
+    }
+    .section--dark .section-title { color: var(--white); }
+
+    .section-subtitle {
+      font-size: 17px;
+      color: var(--text-muted);
+      max-width: 580px;
+      line-height: 1.7;
+    }
+    .section--dark .section-subtitle { color: rgba(255,255,255,0.65); }
+
+    .section-head           { margin-bottom: 56px; }
+    .section-head--center   { text-align: center; }
+    .section-head--center .section-subtitle { margin: 0 auto; }
+
+    /* =============================================
+       BUTTONS
+    ============================================= */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 14px 28px;
+      border-radius: 100px;
+      font-family: var(--font-display);
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.15s;
+      border: none;
+    }
+    .btn:hover          { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.15); }
+    .btn--primary       { background: var(--gold); color: var(--navy); }
+    .btn--navy          { background: var(--navy); color: var(--white); }
+    .btn--gold          { background: var(--gold); color: var(--navy); }
+    .btn--outline       { background: transparent; border: 2px solid rgba(255,255,255,0.4); color: var(--white); }
+    .btn--outline:hover { border-color: var(--white); background: rgba(255,255,255,0.08); }
+    .btn--full          { width: 100%; justify-content: center; border-radius: 12px; padding: 14px; }
+
+    /* =============================================
+       NAVBAR
+    ============================================= */
+    .navbar {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      background: rgba(255,255,255,0.96);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--divider);
+    }
+    .navbar__inner {
+      max-width: var(--max-width);
+      margin: 0 auto;
+      padding: 0 24px;
+      height: 68px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .navbar__logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-family: var(--font-display);
+      font-weight: 800;
+      font-size: 18px;
+      color: var(--navy);
+    }
+    /* CSS Star — signature mark */
+    .logo-star {
+      width: 34px; height: 34px;
+      background: var(--gold);
+      clip-path: polygon(50% 0%,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%);
+      flex-shrink: 0;
+    }
+    .navbar__nav {
+      display: flex;
+      gap: 32px;
+      list-style: none;
+    }
+    .navbar__nav a {
+      font-family: var(--font-display);
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-muted);
+      transition: color 0.2s;
+    }
+    .navbar__nav a:hover { color: var(--navy); }
+    .navbar__cta {
+      background: var(--navy);
+      color: var(--white) !important;
+      padding: 10px 20px;
+      border-radius: 100px;
+      font-family: var(--font-display);
+      font-size: 14px;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: background 0.2s;
+    }
+    .navbar__cta:hover { background: var(--navy-mid); }
+
+    /* =============================================
+       HERO
+    ============================================= */
+    .hero {
+      min-height: 100vh;
+      background: var(--navy);
+      display: flex;
+      align-items: center;
+      padding: 100px 0 80px;
+      position: relative;
+      overflow: hidden;
+    }
+    /* Signature element: large geometric star in background */
+    .hero__star-bg {
+      position: absolute;
+      right: -80px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 680px;
+      height: 680px;
+      pointer-events: none;
+    }
+    .hero__star-bg svg { width: 100%; height: 100%; opacity: 0.06; }
+
+    .hero__inner {
+      position: relative;
+      z-index: 2;
+      max-width: var(--max-width);
+      margin: 0 auto;
+      padding: 0 24px;
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 64px;
+      align-items: center;
+    }
+
+    /* ── [DYNAMIC] Target badge ── */
+    .hero__target-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(232,160,32,0.12);
+      border: 1px solid rgba(232,160,32,0.3);
+      padding: 8px 18px;
+      border-radius: 100px;
+      margin-bottom: 28px;
+    }
+    .hero__target-badge span {
+      font-family: var(--font-display);
+      font-size: 13px;
+      font-weight: 600;
+      color: rgba(255,255,255,0.7);
+    }
+    .hero__target-badge strong {
+      color: var(--gold);
+      font-weight: 800;
+    }
+    /* ──────────────────────────── */
+
+    .hero__label {
+      font-family: var(--font-display);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 2.5px;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 20px;
+    }
+    .hero__title {
+      font-size: clamp(34px, 4.5vw, 58px);
+      font-weight: 800;
+      color: var(--white);
+      line-height: 1.12;
+      margin-bottom: 24px;
+    }
+    .hero__title em { font-style: normal; color: var(--gold); }
+    .hero__desc {
+      font-size: 17px;
+      line-height: 1.75;
+      color: rgba(255,255,255,0.68);
+      margin-bottom: 40px;
+      max-width: 480px;
+    }
+    .hero__actions { display: flex; gap: 16px; flex-wrap: wrap; }
+
+    /* Proposal summary card (right side) */
+    .proposal-card {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: var(--radius-md);
+      padding: 28px;
+      backdrop-filter: blur(8px);
+    }
+    .proposal-card__header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 20px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+    .dot { width: 10px; height: 10px; border-radius: 50%; }
+    .proposal-card__title {
+      font-family: var(--font-display);
+      font-size: 12px;
+      font-weight: 600;
+      color: rgba(255,255,255,0.45);
+      letter-spacing: 0.5px;
+      margin-left: 4px;
+    }
+    .proposal-card__items { display: flex; flex-direction: column; gap: 10px; }
+    .p-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 14px;
+      background: rgba(255,255,255,0.04);
+      border-radius: var(--radius-sm);
+      border-left: 3px solid var(--gold);
+    }
+    .p-item__icon {
+      width: 32px; height: 32px;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(232,160,32,0.18);
+      border-radius: 8px;
+      color: var(--gold);
+      font-size: 13px;
+      flex-shrink: 0;
+    }
+    .p-item__text {
+      font-family: var(--font-display);
+      font-size: 13px;
+      font-weight: 600;
+      color: rgba(255,255,255,0.85);
+    }
+    .p-item__sub { font-size: 11px; color: rgba(255,255,255,0.4); margin-top: 2px; }
+
+    /* =============================================
+       STATS STRIP
+    ============================================= */
+    .stats-strip { background: var(--gold); padding: 28px 24px; }
+    .stats-strip__inner {
+      max-width: var(--max-width);
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 20px;
+    }
+    .stat-item { text-align: center; }
+    .stat-item__number {
+      font-family: var(--font-display);
+      font-size: 34px;
+      font-weight: 800;
+      color: var(--navy);
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+    .stat-item__label {
+      font-size: 13px;
+      font-weight: 600;
+      color: rgba(10,34,64,0.65);
+      letter-spacing: 0.3px;
+    }
+    .stat-sep { width: 1px; height: 44px; background: rgba(10,34,64,0.18); }
+
+    /* =============================================
+       TENTANG KAMI
+    ============================================= */
+    .about__grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 72px;
+      align-items: center;
+    }
+    .about__image-wrap { position: relative; }
+    .about__image {
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      aspect-ratio: 4/5;
+      background: var(--off-white);
+    }
+    .about__image img { width: 100%; height: 100%; object-fit: cover; }
+    .about__badge {
+      position: absolute;
+      bottom: -20px; right: -20px;
+      background: var(--gold);
+      border-radius: var(--radius-md);
+      padding: 20px 24px;
+      box-shadow: var(--shadow-hover);
+      text-align: center;
+    }
+    .about__badge-num {
+      font-family: var(--font-display);
+      font-size: 32px;
+      font-weight: 800;
+      color: var(--navy);
+      line-height: 1;
+    }
+    .about__badge-text { font-size: 12px; font-weight: 600; color: rgba(10,34,64,0.7); margin-top: 4px; }
+    .about__content p { color: var(--text-muted); font-size: 16px; line-height: 1.8; margin-bottom: 20px; }
+    .about__points { margin-top: 28px; display: flex; flex-direction: column; gap: 16px; }
+    .about__point { display: flex; align-items: flex-start; gap: 14px; }
+    .about__point-icon {
+      width: 40px; height: 40px;
+      background: var(--gold-lt);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--gold);
+      font-size: 15px;
+      flex-shrink: 0;
+    }
+    .about__point-title { font-family: var(--font-display); font-size: 15px; font-weight: 700; margin-bottom: 3px; }
+    .about__point-desc  { font-size: 14px; color: var(--text-muted); }
+
+    /* =============================================
+       LAYANAN
+    ============================================= */
+    .services__grid {
+      display: grid;
+      grid-template-columns: repeat(3,1fr);
+      gap: 24px;
+    }
+    .service-card {
+      background: var(--white);
+      border: 1px solid var(--divider);
+      border-radius: var(--radius-md);
+      padding: 32px 28px;
+      position: relative;
+      overflow: hidden;
+      transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
+    }
+    .service-card::after {
+      content: '';
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 3px;
+      background: var(--gold);
+      transform: scaleX(0);
+      transition: transform 0.25s;
+      transform-origin: left;
+    }
+    .service-card:hover { border-color: transparent; box-shadow: var(--shadow-hover); transform: translateY(-4px); }
+    .service-card:hover::after { transform: scaleX(1); }
+    .service-card__icon {
+      width: 52px; height: 52px;
+      background: var(--navy);
+      border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--gold);
+      font-size: 22px;
+      margin-bottom: 20px;
+    }
+    .service-card__title { font-family: var(--font-display); font-size: 17px; font-weight: 700; margin-bottom: 10px; color: var(--navy); }
+    .service-card__desc  { font-size: 14px; color: var(--text-muted); line-height: 1.7; }
+
+    /* =============================================
+       KENAPA KAMI
+    ============================================= */
+    .why__grid { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: center; }
+    .why__list { display: flex; flex-direction: column; gap: 16px; }
+    .why-item {
+      display: flex;
+      gap: 20px;
+      padding: 22px;
+      border-radius: var(--radius-md);
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.08);
+      transition: background 0.2s;
+    }
+    .why-item:hover { background: rgba(255,255,255,0.09); }
+    .why-item__num {
+      font-family: var(--font-display);
+      font-size: 26px;
+      font-weight: 800;
+      color: var(--gold);
+      line-height: 1;
+      width: 40px;
+      flex-shrink: 0;
+    }
+    .why-item__title { font-family: var(--font-display); font-size: 15px; font-weight: 700; color: var(--white); margin-bottom: 5px; }
+    .why-item__desc  { font-size: 13px; color: rgba(255,255,255,0.58); line-height: 1.6; }
+
+    .acred-badge {
+      background: rgba(255,255,255,0.05);
+      border: 2px solid rgba(232,160,32,0.35);
+      border-radius: var(--radius-lg);
+      padding: 40px 36px;
+      text-align: center;
+    }
+    .acred-star {
+      width: 72px; height: 72px;
+      background: var(--gold);
+      clip-path: polygon(50% 0%,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%);
+      margin: 0 auto 20px;
+    }
+    .acred-title { font-family: var(--font-display); font-size: 20px; font-weight: 800; color: var(--white); margin-bottom: 10px; }
+    .acred-sub   { font-size: 14px; color: rgba(255,255,255,0.58); line-height: 1.65; }
+    .acred-tags  { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 20px; justify-content: center; }
+    .tag {
+      background: rgba(232,160,32,0.14);
+      border: 1px solid rgba(232,160,32,0.28);
+      color: var(--gold);
+      padding: 5px 14px;
+      border-radius: 100px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    /* =============================================
+       KLIEN
+    ============================================= */
+    .clients__grid {
+      display: grid;
+      grid-template-columns: repeat(6,1fr);
+      gap: 2px;
+    }
+    .client-logo {
+      display: flex; align-items: center; justify-content: center;
+      padding: 20px 12px;
+      background: var(--off-white);
+      border-radius: var(--radius-sm);
+      filter: grayscale(100%);
+      opacity: 0.55;
+      transition: filter 0.25s, opacity 0.25s;
+      min-height: 76px;
+    }
+    .client-logo:hover { filter: none; opacity: 1; }
+    .client-logo img { max-height: 36px; max-width: 100%; object-fit: contain; }
+
+    /* =============================================
+       PROSES
+    ============================================= */
+    .process__steps {
+      display: grid;
+      grid-template-columns: repeat(4,1fr);
+      position: relative;
+    }
+    .process__steps::before {
+      content: '';
+      position: absolute;
+      top: 27px;
+      left: 12.5%; right: 12.5%;
+      height: 2px;
+      background: linear-gradient(to right, var(--gold), var(--gold-lt));
+    }
+    .process-step { display: flex; flex-direction: column; align-items: center; text-align: center; padding: 0 16px; }
+    .process-step__num {
+      width: 54px; height: 54px;
+      background: var(--navy);
+      border: 3px solid var(--gold);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--font-display);
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--gold);
+      margin-bottom: 20px;
+      position: relative;
+      z-index: 1;
+    }
+    .process-step__title { font-family: var(--font-display); font-size: 15px; font-weight: 700; color: var(--navy); margin-bottom: 8px; }
+    .process-step__desc  { font-size: 13px; color: var(--text-muted); line-height: 1.6; }
+
+    /* =============================================
+       PAKET PROGRAM  [DYNAMIC]
+    ============================================= */
+    .packages__grid {
+      display: grid;
+      grid-template-columns: repeat(3,1fr);
+      gap: 24px;
+      align-items: stretch;
+    }
+    .package-card {
+      background: var(--white);
+      border: 2px solid var(--divider);
+      border-radius: var(--radius-lg);
+      padding: 36px 28px;
+      display: flex;
+      flex-direction: column;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .package-card:hover { border-color: var(--navy); box-shadow: var(--shadow-hover); }
+
+    .package-card--featured {
+      background: var(--navy);
+      border-color: var(--gold);
+    }
+    .package-card--featured .package-card__name  { color: var(--white); }
+    .package-card--featured .package-card__sub   { color: rgba(255,255,255,0.58); }
+    .package-card--featured .package-card__feat  { color: var(--white); }
+    .package-card--featured .package-card__divider { background: rgba(255,255,255,0.12); }
+
+    .pkg-badge {
+      display: inline-block;
+      background: var(--gold);
+      color: var(--navy);
+      font-family: var(--font-display);
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      padding: 4px 12px;
+      border-radius: 100px;
+      margin-bottom: 18px;
+    }
+    .package-card__name {
+      font-family: var(--font-display);
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--navy);
+      margin-bottom: 8px;
+    }
+    .package-card__sub {
+      font-size: 14px;
+      color: var(--text-muted);
+      margin-bottom: 22px;
+      line-height: 1.55;
+    }
+    .package-card__divider { height: 1px; background: var(--divider); margin-bottom: 22px; }
+
+    .package-card__feats { flex: 1; display: flex; flex-direction: column; gap: 10px; margin-bottom: 26px; }
+    .package-card__feat {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      font-size: 14px;
+      color: var(--text);
+    }
+    .package-card__feat i      { color: var(--green); margin-top: 2px; font-size: 13px; flex-shrink: 0; }
+    .package-card--featured .package-card__feat i { color: var(--gold); }
+
+    /* =============================================
+       TESTIMONIAL
+    ============================================= */
+    .testimonials__grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 24px; }
+    .testi-card {
+      background: var(--white);
+      border: 1px solid var(--divider);
+      border-radius: var(--radius-md);
+      padding: 32px;
+      box-shadow: var(--shadow-card);
+    }
+    .testi-card__stars  { color: var(--gold); font-size: 16px; letter-spacing: 2px; margin-bottom: 14px; }
+    .testi-card__quote  { font-size: 15px; line-height: 1.75; color: var(--text); margin-bottom: 22px; font-style: italic; }
+    .testi-card__author { display: flex; align-items: center; gap: 14px; }
+    .testi-card__avatar {
+      width: 44px; height: 44px;
+      background: var(--navy);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--font-display);
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--gold);
+      flex-shrink: 0;
+    }
+    .testi-card__name { font-family: var(--font-display); font-size: 14px; font-weight: 700; margin-bottom: 2px; }
+    .testi-card__role { font-size: 13px; color: var(--text-muted); }
+
+    /* =============================================
+       KONTAK / CTA
+    ============================================= */
+    .contact-form { max-width: 560px; margin: 0 auto; text-align: left; }
+    .form-grid    { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .form-group   { display: flex; flex-direction: column; gap: 6px; }
+    .form-group--full { grid-column: 1 / -1; }
+    .form-group label {
+      font-family: var(--font-display);
+      font-size: 13px;
+      font-weight: 600;
+      color: rgba(255,255,255,0.8);
+    }
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      padding: 12px 16px;
+      border: 1.5px solid rgba(255,255,255,0.15);
+      border-radius: var(--radius-sm);
+      font-family: var(--font-body);
+      font-size: 14px;
+      color: var(--white);
+      background: rgba(255,255,255,0.07);
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .form-group input::placeholder,
+    .form-group textarea::placeholder { color: rgba(255,255,255,0.35); }
+    .form-group select option          { background: var(--navy); color: var(--white); }
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+      border-color: var(--gold);
+      box-shadow: 0 0 0 3px rgba(232,160,32,0.15);
+    }
+    .form-group textarea { resize: vertical; min-height: 100px; }
+    .form-actions { margin-top: 20px; display: flex; gap: 12px; flex-wrap: wrap; }
+
+    /* =============================================
+       FOOTER
+    ============================================= */
+    .footer { background: #060F1A; color: rgba(255,255,255,0.48); padding: 56px 0 24px; }
+    .footer__grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr 1fr;
+      gap: 48px;
+      max-width: var(--max-width);
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+    .footer__brand-name { font-family: var(--font-display); font-size: 20px; font-weight: 800; color: var(--white); margin-bottom: 12px; }
+    .footer__brand-desc { font-size: 14px; line-height: 1.7; margin-bottom: 22px; }
+    .footer__socials    { display: flex; gap: 10px; }
+    .footer__social {
+      width: 36px; height: 36px;
+      background: rgba(255,255,255,0.08);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      color: rgba(255,255,255,0.5);
+      font-size: 14px;
+      transition: background 0.2s, color 0.2s;
+    }
+    .footer__social:hover { background: var(--gold); color: var(--navy); }
+    .footer__col-title {
+      font-family: var(--font-display);
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--white);
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      margin-bottom: 18px;
+    }
+    .footer__links      { display: flex; flex-direction: column; gap: 10px; }
+    .footer__links a,
+    .footer__links span { font-size: 14px; color: rgba(255,255,255,0.48); transition: color 0.2s; }
+    .footer__links a:hover { color: var(--gold); }
+    .footer__bottom {
+      max-width: var(--max-width);
+      margin: 40px auto 0;
+      padding: 20px 24px 0;
+      border-top: 1px solid rgba(255,255,255,0.07);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 13px;
+    }
+    .footer__bottom a { color: var(--gold); }
+
+    /* =============================================
+       RESPONSIVE
+    ============================================= */
+    @media (max-width: 960px) {
+      :root { --section-pad: 64px; }
+      .hero__inner          { grid-template-columns: 1fr; gap: 48px; }
+      .hero__visual         { display: none; }
+      .about__grid          { grid-template-columns: 1fr; gap: 48px; }
+      .why__grid            { grid-template-columns: 1fr; gap: 40px; }
+      .services__grid       { grid-template-columns: repeat(2,1fr); }
+      .packages__grid       { grid-template-columns: 1fr; max-width: 480px; margin: 0 auto; }
+      .clients__grid        { grid-template-columns: repeat(3,1fr); }
+      .process__steps       { grid-template-columns: repeat(2,1fr); gap: 32px; }
+      .process__steps::before { display: none; }
+      .footer__grid         { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 640px) {
+      :root { --section-pad: 48px; }
+      .navbar__nav          { display: none; }
+      .services__grid       { grid-template-columns: 1fr; }
+      .testimonials__grid   { grid-template-columns: 1fr; }
+      .form-grid            { grid-template-columns: 1fr; }
+      .clients__grid        { grid-template-columns: repeat(2,1fr); }
+      .footer__grid         { grid-template-columns: 1fr; }
+      .stats-strip__inner   { flex-direction: column; gap: 16px; }
+      .stat-sep             { display: none; }
+      .process__steps       { grid-template-columns: 1fr; }
+      .hero__actions        { flex-direction: column; }
+    }
+
+    /* =============================================
+       FADE-IN ANIMATION
+    ============================================= */
+    @media (prefers-reduced-motion: no-preference) {
+      .fade-in {
+        opacity: 0;
+        transform: translateY(24px);
+        transition: opacity 0.6s ease, transform 0.6s ease;
+      }
+      .fade-in.visible { opacity: 1; transform: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ═══════════════════════════════════════
+       NAVBAR
+  ═══════════════════════════════════════ -->
+  <nav class="navbar" aria-label="Navigasi utama">
+    <div class="navbar__inner">
+      <a href="#" class="navbar__logo">
+        <div class="logo-star" aria-hidden="true"></div>
+        STAR Training
+      </a>
+      <ul class="navbar__nav">
+        <li><a href="#tentang">Tentang Kami</a></li>
+        <li><a href="#layanan">Layanan</a></li>
+        <li><a href="#klien">Klien</a></li>
+        <li><a href="#paket">Paket</a></li>
+        <li><a href="#kontak">Kontak</a></li>
+      </ul>
+      <a href="https://api.whatsapp.com/send/?phone=6281111158002" target="_blank" rel="noopener" class="navbar__cta">
+        <i class="fab fa-whatsapp"></i> WhatsApp Kami
+      </a>
+    </div>
+  </nav>
+
+
+  <!-- ═══════════════════════════════════════
+       HERO
+       ── [DYNAMIC] ──
+       Ganti {{NAMA_INSTANSI}} dengan nama perusahaan/instansi target.
+       Item pada proposal-card dapat disesuaikan per klien.
+  ═══════════════════════════════════════ -->
+  <section class="hero">
+    <div class="hero__star-bg" aria-hidden="true">
+      <svg viewBox="0 0 600 600" xmlns="http://www.w3.org/2000/svg" fill="white">
+        <polygon points="300,0 370,210 590,210 410,340 475,550 300,420 125,550 190,340 10,210 230,210"/>
+        <polygon points="300,80 350,230 500,230 380,310 430,460 300,380 170,460 220,310 100,230 250,230" opacity="0.45"/>
+      </svg>
+    </div>
+
+    <div class="hero__inner">
+      <!-- Kiri: Teks Utama -->
+      <div>
+        <!-- ── [DYNAMIC] Ganti {{NAMA_INSTANSI}} ── -->
+        <div class="hero__target-badge">
+          <i class="fas fa-envelope-open-text" style="color:var(--gold);font-size:13px;"></i>
+          <span>Proposal untuk: <strong>{{NAMA_INSTANSI}}</strong></span>
+        </div>
+        <!-- ─────────────────────────────────────── -->
+
+        <div class="hero__label">Lembaga Pelatihan & Pengembangan SDM · Terakreditasi BNSP</div>
+        <h1 class="hero__title">
+          Investasi SDM yang<br><em>Terukur & Berdampak</em>
+        </h1>
+        <p class="hero__desc">
+          STAR Training & Consulting hadir sebagai mitra strategis pengembangan Sumber Daya Manusia. Program kami dirancang spesifik sesuai kebutuhan organisasi Anda, didukung fasilitator berpengalaman dan metodologi terukur.
+        </p>
+        <div class="hero__actions">
+          <a href="#paket" class="btn btn--primary">
+            <i class="fas fa-file-alt"></i> Lihat Paket Program
+          </a>
+          <a href="#kontak" class="btn btn--outline">
+            <i class="fas fa-phone-alt"></i> Diskusi Kebutuhan
+          </a>
+        </div>
+      </div>
+
+      <!-- Kanan: Proposal Summary Card -->
+      <div class="hero__visual">
+        <div class="proposal-card">
+          <div class="proposal-card__header">
+            <div class="dot" style="background:#FF5F57;"></div>
+            <div class="dot" style="background:#FEBC2E;"></div>
+            <div class="dot" style="background:#28C840;"></div>
+            <span class="proposal-card__title">Ringkasan Penawaran Program</span>
+          </div>
+          <!-- ── [DYNAMIC] Item program disesuaikan per target ── -->
+          <div class="proposal-card__items">
+            <div class="p-item">
+              <div class="p-item__icon"><i class="fas fa-users-gear"></i></div>
+              <div>
+                <div class="p-item__text">Pelatihan SDM In-House</div>
+                <div class="p-item__sub">Disesuaikan kebutuhan organisasi</div>
+              </div>
+            </div>
+            <div class="p-item">
+              <div class="p-item__icon"><i class="fas fa-certificate"></i></div>
+              <div>
+                <div class="p-item__text">Sertifikasi BNSP</div>
+                <div class="p-item__sub">Bimtek & uji kompetensi resmi</div>
+              </div>
+            </div>
+            <div class="p-item">
+              <div class="p-item__icon"><i class="fas fa-chart-line"></i></div>
+              <div>
+                <div class="p-item__text">HR Consulting & Assessment</div>
+                <div class="p-item__sub">Evaluasi dan strategi SDM</div>
+              </div>
+            </div>
+            <div class="p-item">
+              <div class="p-item__icon"><i class="fas fa-person-hiking"></i></div>
+              <div>
+                <div class="p-item__text">Outbound Team Building</div>
+                <div class="p-item__sub">Experiential learning & sinergi tim</div>
+              </div>
+            </div>
+          </div>
+          <!-- ─────────────────────────────────────────────────── -->
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ═══════════════════════════════════════
+       STATS STRIP
+  ═══════════════════════════════════════ -->
+  <div class="stats-strip" role="region" aria-label="Statistik STAR Training">
+    <div class="stats-strip__inner">
+      <div class="stat-item">
+        <div class="stat-item__number">15+</div>
+        <div class="stat-item__label">Tahun Pengalaman</div>
+      </div>
+      <div class="stat-sep"></div>
+      <div class="stat-item">
+        <div class="stat-item__number">200+</div>
+        <div class="stat-item__label">Klien Perusahaan & Instansi</div>
+      </div>
+      <div class="stat-sep"></div>
+      <div class="stat-item">
+        <div class="stat-item__number">500+</div>
+        <div class="stat-item__label">Program Terlaksana</div>
+      </div>
+      <div class="stat-sep"></div>
+      <div class="stat-item">
+        <div class="stat-item__number">BNSP</div>
+        <div class="stat-item__label">Terakreditasi Resmi</div>
+      </div>
+      <div class="stat-sep"></div>
+      <div class="stat-item">
+        <div class="stat-item__number">98%</div>
+        <div class="stat-item__label">Tingkat Kepuasan Klien</div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ═══════════════════════════════════════
+       TENTANG KAMI
+  ═══════════════════════════════════════ -->
+  <section class="section" id="tentang">
+    <div class="container">
+      <div class="about__grid fade-in">
+        <div class="about__image-wrap">
+          <!-- [DYNAMIC] Ganti src dengan foto kegiatan terbaru -->
+          <div class="about__image">
+            <img
+              src="https://startraining.info/wp-content/uploads/2025/07/DSC0030-scaled.jpg"
+              alt="Kegiatan Training STAR Training & Consulting"
+              loading="lazy"
+            >
+          </div>
+          <div class="about__badge">
+            <div class="about__badge-num">15+</div>
+            <div class="about__badge-text">Tahun Membangun SDM</div>
+          </div>
+        </div>
+        <div class="about__content">
+          <span class="eyebrow">Tentang Kami</span>
+          <h2 class="section-title">Mitra Strategis Pengembangan SDM Indonesia</h2>
+          <p>STAR Training & Consulting adalah lembaga pelatihan profesional yang fokus pada peningkatan kompetensi dan produktivitas Sumber Daya Manusia di perusahaan swasta maupun instansi pemerintahan di seluruh Indonesia.</p>
+          <p>Berkantor pusat di Bandung dengan representative office di Jakarta, kami melayani 200+ organisasi dengan program yang terukur, aplikatif, dan berorientasi pada hasil nyata.</p>
+          <div class="about__points">
+            <div class="about__point">
+              <div class="about__point-icon"><i class="fas fa-certificate"></i></div>
+              <div>
+                <div class="about__point-title">Terakreditasi BNSP</div>
+                <div class="about__point-desc">Lembaga resmi yang diakui Badan Nasional Sertifikasi Profesi untuk penyelenggaraan pelatihan dan uji kompetensi.</div>
+              </div>
+            </div>
+            <div class="about__point">
+              <div class="about__point-icon"><i class="fas fa-chalkboard-teacher"></i></div>
+              <div>
+                <div class="about__point-title">Fasilitator Berpengalaman</div>
+                <div class="about__point-desc">Tim trainer tersertifikasi dengan rekam jejak di berbagai industri, dari BUMN hingga kementerian RI.</div>
+              </div>
+            </div>
+            <div class="about__point">
+              <div class="about__point-icon"><i class="fas fa-sliders"></i></div>
+              <div>
+                <div class="about__point-title">Program Fleksibel & Terukur</div>
+                <div class="about__point-desc">Setiap program dirancang menyesuaikan kebutuhan organisasi, dengan evaluasi dan laporan hasil yang transparan.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ═══════════════════════════════════════
+       LAYANAN KAMI
+  ═══════════════════════════════════════ -->
+  <section class="section section--alt" id="layanan">
+    <div class="container">
+      <div class="section-head section-head--center fade-in">
+        <span class="eyebrow">Layanan Unggulan</span>
+        <h2 class="section-title">Solusi Lengkap Pengembangan SDM</h2>
+        <p class="section-subtitle">Enam program unggulan yang dapat dikombinasikan dan disesuaikan dengan kebutuhan organisasi Anda.</p>
+      </div>
+      <div class="services__grid fade-in">
+        <div class="service-card">
+          <div class="service-card__icon"><i class="fas fa-fire-flame-curved"></i></div>
+          <h3 class="service-card__title">Motivation Session</h3>
+          <p class="service-card__desc">Sesi motivasi yang membentuk mindset positif dan ketangguhan tim dalam menghadapi berbagai tantangan pekerjaan.</p>
+        </div>
+        <div class="service-card">
+          <div class="service-card__icon"><i class="fas fa-id-badge"></i></div>
+          <h3 class="service-card__title">Bimtek & Sertifikasi BNSP</h3>
+          <p class="service-card__desc">Program bimbingan teknis dan uji kompetensi resmi BNSP untuk berbagai bidang profesi dan jabatan.</p>
+        </div>
+        <div class="service-card">
+          <div class="service-card__icon"><i class="fas fa-umbrella-beach"></i></div>
+          <h3 class="service-card__title">Masa Persiapan Pensiun</h3>
+          <p class="service-card__desc">Pembekalan keterampilan finansial, psikologis, dan praktis bagi karyawan yang akan memasuki masa purna tugas.</p>
+        </div>
+        <div class="service-card">
+          <div class="service-card__icon"><i class="fas fa-clipboard-check"></i></div>
+          <h3 class="service-card__title">HR Assessment & Try Out</h3>
+          <p class="service-card__desc">Evaluasi menyeluruh untuk menganalisis dan mengukur kompetensi SDM organisasi secara objektif dan terstandar.</p>
+        </div>
+        <div class="service-card">
+          <div class="service-card__icon"><i class="fas fa-laptop-code"></i></div>
+          <h3 class="service-card__title">IT & Digital Infrastruktur</h3>
+          <p class="service-card__desc">Pelatihan teknis untuk meningkatkan keterampilan digital, keamanan siber, dan optimalisasi infrastruktur IT organisasi.</p>
+        </div>
+        <div class="service-card">
+          <div class="service-card__icon"><i class="fas fa-people-carry-box"></i></div>
+          <h3 class="service-card__title">Outbound Team Building</h3>
+          <p class="service-card__desc">Experiential learning di alam terbuka yang memperkuat sinergi, komunikasi, dan kolaborasi tim secara nyata.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ═══════════════════════════════════════
+       KENAPA KAMI
+  ═══════════════════════════════════════ -->
+  <section class="section section--dark" id="kenapa">
+    <div class="container">
+      <div class="why__grid fade-in">
+        <div>
+          <span class="eyebrow">Keunggulan Kami</span>
+          <h2 class="section-title">Mengapa Memilih STAR Training?</h2>
+          <p class="section-subtitle">Kami bukan sekadar vendor pelatihan — kami adalah mitra jangka panjang yang berinvestasi pada pertumbuhan SDM Anda.</p>
+          <div class="why__list" style="margin-top:36px;">
+            <div class="why-item">
+              <div class="why-item__num">01</div>
+              <div>
+                <div class="why-item__title">Berpengalaman & Terpercaya</div>
+                <div class="why-item__desc">15+ tahun melayani ratusan perusahaan swasta dan instansi pemerintah, termasuk BUMN dan kementerian RI.</div>
+              </div>
+            </div>
+            <div class="why-item">
+              <div class="why-item__num">02</div>
+              <div>
+                <div class="why-item__title">Materi Relevan & Aplikatif</div>
+                <div class="why-item__desc">Kurikulum dikembangkan dari kebutuhan nyata dunia kerja. Peserta langsung dapat menerapkan hasil pelatihan.</div>
+              </div>
+            </div>
+            <div class="why-item">
+              <div class="why-item__num">03</div>
+              <div>
+                <div class="why-item__title">Disesuaikan dengan Organisasi Anda</div>
+                <div class="why-item__desc">Program fleksibel dirancang berdasarkan Training Needs Analysis (TNA) spesifik per klien.</div>
+              </div>
+            </div>
+            <div class="why-item">
+              <div class="why-item__num">04</div>
+              <div>
+                <div class="why-item__title">Pelaporan & Evaluasi Transparan</div>
+                <div class="why-item__desc">Setiap program disertai laporan pre/post assessment sehingga ROI pelatihan dapat diukur dengan jelas.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="why__visual" style="display:flex;align-items:center;justify-content:center;">
+          <div class="acred-badge">
+            <div class="acred-star" aria-hidden="true"></div>
+            <div class="acred-title">STAR Training & Consulting</div>
+            <div class="acred-sub">Lembaga Pelatihan Profesional Terakreditasi untuk Pengembangan SDM Korporasi & Pemerintahan Indonesia</div>
+            <div class="acred-tags">
+              <span class="tag">BNSP</span>
+              <span class="tag">Terakreditasi</span>
+              <span class="tag">Bandung</span>
+              <span class="tag">Jakarta</span>
+              <span class="tag">Nasional</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ═══════════════════════════════════════
+       KLIEN KAMI
+       ── [DYNAMIC] ──
+       Logo klien dapat dipilih/filter berdasarkan
+       industri yang relevan dengan target proposal.
+  ═══════════════════════════════════════ -->
+  <section class="section" id="klien">
+    <div class="container">
+      <div class="section-head section-head--center fade-in">
+        <span class="eyebrow">Klien Kami</span>
+        <h2 class="section-title">Dipercaya oleh Institusi Terkemuka</h2>
+        <p class="section-subtitle">Dari kementerian pusat hingga perusahaan BUMN dan swasta nasional — kami bangga melayani beragam organisasi di Indonesia.</p>
+      </div>
+      <div class="clients__grid fade-in">
+        <div class="client-logo"><img src="https://startraining.info/wp-content/uploads/2025/07/Kementerian-Perindustrian-1024x538.png" alt="Kementerian Perindustrian" loading="lazy"></div>
+        <div class="client-logo"><img src="https://startraining.info/wp-content/uploads/2025/07/Logo-Kementerian-Keuangan-Indonesia-1024x635.png" alt="Kementerian Keuangan" loading="lazy"></div>
+        <div class="client-logo"><img src="https://startraining.info/wp-content/uploads/2025/07/Logo_PLN-748x1024.png" alt="PLN" loading="lazy"></div>
+        <div class="client-logo"><img src="https://startraining.info/wp-content/uploads/2026/02/Bank-Rakyat-Indonesia-BRI.png" alt="Bank BRI" loading="lazy"></div>
+        <div class="client-logo"><img src="https://startraining.info/wp-content/uploads/2025/07/Logo-bank-bjb-syariah-1024x747.png" alt="Bank BJB Syariah" loading="lazy"></div>
+        <div class="client-logo"><img src="https://startraining.info/wp-content/uploads/2025/07/ASDP_Logo_2023-1024x705.png" alt="ASDP" loading="lazy"></div>
+        <div class="client-logo"><img src="https://startraining.info/wp-content/uploads/2025/07/ITB-1024x1024.png" alt="ITB" loading="lazy"></div>
+        <div class="client-logo"><img src="https://startraining.info/wp-content/uploads/2025/07/upi-universitas-pendidikan-indonesia-logo-660BB4721E-seeklogo.com_.png" alt="UPI" loading="lazy"></div>
+        <div class="client-logo"><img src="https://startraining.info/wp-content/uploads/2025/07/UNS-V1-1024x538.png" alt="UNS" loading="lazy"></div>
+        <div class="client-logo"><img src="https://startraining.info/wp-content/uploads/2026/02/Nindya-Karya.png" alt="Nindya Karya" loading="lazy"></div>
+        <div class="client-logo"><img src="https://startraining.info/wp-content/uploads/2026/02/Hino-symbol-1440x900-1-1024x640.png" alt="Hino" loading="lazy"></div>
+        <div class="client-logo"><img src="https://startraining.info/wp-content/uploads/2026/02/logo-kb-bukopin-syariah-fix-miring-vertical-1024x721.png" alt="KB Bukopin Syariah" loading="lazy"></div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ═══════════════════════════════════════
+       PROSES KERJASAMA
+  ═══════════════════════════════════════ -->
+  <section class="section section--alt" id="proses">
+    <div class="container">
+      <div class="section-head section-head--center fade-in">
+        <span class="eyebrow">Alur Kerjasama</span>
+        <h2 class="section-title">Cara Kerja Kami</h2>
+        <p class="section-subtitle">Proses terstruktur dari konsultasi awal hingga evaluasi akhir untuk memastikan program berjalan optimal dan terukur.</p>
+      </div>
+      <div class="process__steps fade-in">
+        <div class="process-step">
+          <div class="process-step__num">1</div>
+          <h3 class="process-step__title">Konsultasi Kebutuhan</h3>
+          <p class="process-step__desc">Diskusi mendalam untuk memahami tantangan, tujuan, dan kondisi SDM organisasi Anda saat ini.</p>
+        </div>
+        <div class="process-step">
+          <div class="process-step__num">2</div>
+          <h3 class="process-step__title">Perancangan Program</h3>
+          <p class="process-step__desc">Tim kami merancang kurikulum, metode, dan jadwal berdasarkan hasil Training Needs Analysis.</p>
+        </div>
+        <div class="process-step">
+          <div class="process-step__num">3</div>
+          <h3 class="process-step__title">Pelaksanaan Training</h3>
+          <p class="process-step__desc">Program dijalankan fasilitator berpengalaman dengan metode interaktif, engaging, dan aplikatif.</p>
+        </div>
+        <div class="process-step">
+          <div class="process-step__num">4</div>
+          <h3 class="process-step__title">Evaluasi & Laporan</h3>
+          <p class="process-step__desc">Hasil dievaluasi dan dilaporkan secara transparan sebagai dasar pengembangan SDM selanjutnya.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ═══════════════════════════════════════
+       PAKET PROGRAM
+       ── [DYNAMIC] ──
+       Seluruh section ini diisi AI berdasarkan profil
+       dan kebutuhan instansi/perusahaan target.
+       Variabel yang perlu diisi:
+         - package-card__name    → nama paket
+         - package-card__sub     → deskripsi singkat
+         - package-card__feat    → daftar fitur/layanan
+         - pkg-badge (featured)  → label rekomendasi
+       AI dapat menambah/kurangi jumlah paket sesuai kebutuhan.
+  ═══════════════════════════════════════ -->
+  <section class="section" id="paket">
+    <div class="container">
+      <div class="section-head section-head--center fade-in">
+        <span class="eyebrow">Paket Program</span>
+        <h2 class="section-title">Pilih Paket yang Tepat</h2>
+        <!-- [DYNAMIC] Subtitle dapat disesuaikan dengan nama instansi target -->
+        <p class="section-subtitle">Paket fleksibel untuk berbagai skala dan kebutuhan organisasi. Semua dapat dikustomisasi sesuai kondisi di lapangan.</p>
+      </div>
+      <div class="packages__grid fade-in">
+
+        <!-- ── [DYNAMIC] PAKET 1 ── -->
+        <div class="package-card">
+          <div class="package-card__name">Paket Dasar</div>
+          <p class="package-card__sub">Untuk tim atau divisi dengan kebutuhan pelatihan terfokus dalam durasi singkat.</p>
+          <div class="package-card__divider"></div>
+          <ul class="package-card__feats">
+            <li class="package-card__feat"><i class="fas fa-check-circle"></i><span>1 modul pelatihan pilihan</span></li>
+            <li class="package-card__feat"><i class="fas fa-check-circle"></i><span>Durasi 1 hari (8 jam)</span></li>
+            <li class="package-card__feat"><i class="fas fa-check-circle"></i><span>Maks. 30 peserta</span></li>
+            <li class="package-card__feat"><i class="fas fa-check-circle"></i><span>Sertifikat keikutsertaan</span></li>
+            <li class="package-card__feat"><i class="fas fa-check-circle"></i><span>Laporan evaluasi singkat</span></li>
+          </ul>
+          <a href="#kontak" class="btn btn--navy btn--full">Diskusikan Paket Ini</a>
+        </div>
+
+        <!-- ── [DYNAMIC] PAKET 2 (Unggulan) ── -->
+        <div class="package-card package-card--featured">
+          <div class="pkg-badge">Direkomendasikan</div>
+          <div class="package-card__name">Paket Profesional</div>
+          <p class="package-card__sub">Program komprehensif dengan TNA awal dan evaluasi mendalam untuk hasil yang maksimal.</p>
+          <div class="package-card__divider"></div>
+          <ul class="package-card__feats">
+            <li class="package-card__feat"><i class="fas fa-check-circle"></i><span>3 modul pelatihan terintegrasi</span></li>
+            <li class="package-card__feat"><i class="fas fa-check-circle"></i><span>Durasi 3 hari (termasuk refresher)</span></li>
+            <li class="package-card__feat"><i class="fas fa-check-circle"></i><span>Maks. 50 peserta</span></li>
+            <li class="package-card__feat"><i class="fas fa-check-circle"></i><span>TNA & pre-post assessment</span></li>
+            <li class="package-card__feat"><i class="fas fa-check-circle"></i><span>Sertifikat STAR Training</span></li>
+            <li class="package-card__feat"><i class="fas fa-check-circle"></i><span>Laporan evaluasi lengkap</span></li>
+            <li class="package-card__feat"><i class="fas fa-check-circle"></i><span>1× sesi konsultasi follow-up</span></li>
+          </ul>
+          <a href="#kontak" class="btn btn--gold btn--full">Pilih Paket Ini</a>
+        </div>
+
+        <!-- ── [DYNAMIC] PAKET 3 ── -->
+        <div class="package-card">
+          <div class="package-card__name">Paket Enterprise</div>
+          <p class="package-card__sub">Solusi tahunan menyeluruh untuk kebutuhan pengembangan SDM yang berkelanjutan.</p>
+          <div class="package-card__divider"></div>
+          <ul class="package-card__feats">
+            <li class="package-card__feat"><i class="fas fa-check-circle"></i><span>Program tahunan custom (12 bulan)</span></li>
+            <li class="package-card__feat"><i class="fas fa-check-circle"></i><span>Unlimited modul & peserta</span></li>
+            <li class="package-card__feat"><i class="fas fa-check-circle"></i><span>HR Consulting on-demand</span></li>
+            <li class="package-card__feat"><i class="fas fa-check-circle"></i><span>Sertifikasi BNSP termasuk</span></li>
+            <li class="package-card__feat"><i class="fas fa-check-circle"></i><span>Dashboard monitoring SDM</span></li>
+            <li class="package-card__feat"><i class="fas fa-check-circle"></i><span>Laporan kuartalan komprehensif</span></li>
+            <li class="package-card__feat"><i class="fas fa-check-circle"></i><span>Dedicated account manager</span></li>
+          </ul>
+          <a href="#kontak" class="btn btn--navy btn--full">Diskusikan Paket Ini</a>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ═══════════════════════════════════════
+       TESTIMONI
+       ── [DYNAMIC] ──
+       Pilih testimoni yang relevan dengan industri target.
+  ═══════════════════════════════════════ -->
+  <section class="section section--alt" id="testimoni">
+    <div class="container">
+      <div class="section-head section-head--center fade-in">
+        <span class="eyebrow">Testimoni Klien</span>
+        <h2 class="section-title">Apa Kata Mereka</h2>
+        <p class="section-subtitle">Kepercayaan klien adalah ukuran terbaik kualitas layanan kami.</p>
+      </div>
+      <div class="testimonials__grid fade-in">
+        <div class="testi-card">
+          <div class="testi-card__stars">★★★★★</div>
+          <p class="testi-card__quote">"Program Outbound Team Building dari STAR Training benar-benar mengubah dinamika tim kami. Komunikasi dan sinergi antar divisi meningkat signifikan setelah program ini. Sangat rekomendasikan!"</p>
+          <div class="testi-card__author">
+            <div class="testi-card__avatar">AH</div>
+            <div>
+              <div class="testi-card__name">Ahmad Hendra, S.Psi.</div>
+              <div class="testi-card__role">Manager SDM — PT. Nindya Karya (Persero)</div>
+            </div>
+          </div>
+        </div>
+        <div class="testi-card">
+          <div class="testi-card__stars">★★★★★</div>
+          <p class="testi-card__quote">"Bimtek Sertifikasi BNSP yang diselenggarakan STAR Training sangat profesional. Fasilitatornya kompeten, materi relevan, dan penyelenggaraannya rapi dari awal sampai akhir. Peserta puas semua."</p>
+          <div class="testi-card__author">
+            <div class="testi-card__avatar">SR</div>
+            <div>
+              <div class="testi-card__name">Siti Rahayu, S.AP., M.M.</div>
+              <div class="testi-card__role">Kepala Bidang SDM — Instansi Pemerintah Daerah</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ═══════════════════════════════════════
+       KONTAK / CTA
+       ── [DYNAMIC] ──
+       Form ini dapat dihubungkan ke:
+         - Blazor: EditForm + Model binding + ValidationSummary
+         - .NET Web API: POST /api/proposals/submit
+         - Atau WhatsApp redirect dengan query string pre-filled
+       Field {{NAMA_INSTANSI}} bisa di-pre-fill dari URL param.
+  ═══════════════════════════════════════ -->
+  <section class="section section--dark" id="kontak" style="text-align:center;">
+    <div class="container">
+      <div class="section-head section-head--center fade-in">
+        <span class="eyebrow">Kontak Kami</span>
+        <!-- [DYNAMIC] Sesuaikan dengan nama instansi target -->
+        <h2 class="section-title">Siap Memulai Kerjasama?</h2>
+        <p class="section-subtitle">Isi formulir di bawah atau langsung hubungi kami via WhatsApp. Tim kami siap merespons dalam 1×24 jam kerja.</p>
+      </div>
+
+      <div class="contact-form fade-in">
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="f-nama">Nama Lengkap</label>
+            <input type="text" id="f-nama" placeholder="Nama Anda" autocomplete="name">
+          </div>
+          <div class="form-group">
+            <label for="f-jabatan">Jabatan</label>
+            <input type="text" id="f-jabatan" placeholder="Jabatan Anda" autocomplete="organization-title">
+          </div>
+          <div class="form-group">
+            <!-- [DYNAMIC] Bisa di-pre-fill dari URL param ?instansi=... -->
+            <label for="f-instansi">Nama Instansi / Perusahaan</label>
+            <input type="text" id="f-instansi" placeholder="PT / Kementerian / Lembaga" autocomplete="organization">
+          </div>
+          <div class="form-group">
+            <label for="f-telepon">No. WhatsApp / Telepon</label>
+            <input type="tel" id="f-telepon" placeholder="08xx-xxxx-xxxx" autocomplete="tel">
+          </div>
+          <div class="form-group form-group--full">
+            <label for="f-layanan">Layanan yang Diminati</label>
+            <select id="f-layanan">
+              <option value="">Pilih Layanan...</option>
+              <option>Motivation Session</option>
+              <option>Bimtek & Sertifikasi BNSP</option>
+              <option>Masa Persiapan Pensiun</option>
+              <option>HR Assessment & Try Out</option>
+              <option>IT & Digital Infrastruktur</option>
+              <option>Outbound Team Building</option>
+              <option>Paket Kombinasi (Custom)</option>
+            </select>
+          </div>
+          <div class="form-group form-group--full">
+            <label for="f-pesan">Kebutuhan / Pesan</label>
+            <textarea id="f-pesan" placeholder="Ceritakan kebutuhan pengembangan SDM di organisasi Anda..."></textarea>
+          </div>
+        </div>
+        <div class="form-actions" style="margin-top:20px;">
+          <!-- [DYNAMIC] onClick → POST /api/proposals/submit atau WhatsApp redirect -->
+          <button type="button" class="btn btn--primary" style="border-radius:12px;padding:14px 32px;">
+            <i class="fas fa-paper-plane"></i> Kirim Permintaan
+          </button>
+          <a href="https://api.whatsapp.com/send/?phone=6281111158002" target="_blank" rel="noopener"
+             class="btn btn--outline" style="border-radius:12px;">
+            <i class="fab fa-whatsapp"></i> WhatsApp Langsung
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ═══════════════════════════════════════
+       FOOTER
+  ═══════════════════════════════════════ -->
+  <footer class="footer">
+    <div class="footer__grid">
+      <div>
+        <div class="footer__brand-name">STAR Training & Consulting</div>
+        <p class="footer__brand-desc">Lembaga Pelatihan & Pengembangan SDM profesional yang telah dipercaya ratusan perusahaan dan instansi di seluruh Indonesia sejak 2009.</p>
+        <div class="footer__socials">
+          <a href="#" class="footer__social" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+          <a href="#" class="footer__social" aria-label="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
+          <a href="#" class="footer__social" aria-label="YouTube"><i class="fab fa-youtube"></i></a>
+          <a href="https://api.whatsapp.com/send/?phone=6281111158002" target="_blank" rel="noopener" class="footer__social" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
+        </div>
+      </div>
+      <div>
+        <div class="footer__col-title">Layanan</div>
+        <div class="footer__links">
+          <a href="#layanan">Motivation Session</a>
+          <a href="#layanan">Bimtek & Sertifikasi</a>
+          <a href="#layanan">HR Assessment</a>
+          <a href="#layanan">IT & Digital</a>
+          <a href="#layanan">Outbound</a>
+        </div>
+      </div>
+      <div>
+        <div class="footer__col-title">Perusahaan</div>
+        <div class="footer__links">
+          <a href="https://startraining.info/about/" target="_blank">Profil Kami</a>
+          <a href="https://startraining.info/services/" target="_blank">Layanan</a>
+          <a href="#klien">Klien</a>
+          <a href="https://startraining.info/contact/" target="_blank">Kontak</a>
+        </div>
+      </div>
+      <div>
+        <div class="footer__col-title">Hubungi Kami</div>
+        <div class="footer__links">
+          <span>Jl. Cigadung Raya Tengah No. 70/A1, Bandung 40191</span>
+          <span>Pondok Pinang Center CR 10, Jakarta 12310</span>
+          <a href="tel:02225179980">022-2517998</a>
+          <a href="https://api.whatsapp.com/send/?phone=6281111158002" target="_blank" rel="noopener">0811-1115-8002</a>
+          <a href="mailto:startc.info@gmail.com">startc.info@gmail.com</a>
+        </div>
+      </div>
+    </div>
+    <div class="footer__bottom">
+      <span>© 2026 STAR Training & Consulting. Hak Cipta Dilindungi.</span>
+      <!-- [DYNAMIC] Ganti link sesuai kebutuhan -->
+      <span>Developed with ♥ by <a href="#">Yohan Dev</a></span>
+    </div>
+  </footer>
+
+
+  <!-- ═══════════════════════════════════════
+       SCRIPTS
+  ═══════════════════════════════════════ -->
+  <script>
+    // ── Fade-in on scroll ──
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(el => {
+        if (el.isIntersecting) el.target.classList.add('visible');
+      });
+    }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+    document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+
+    // ── Active nav link highlight ──
+    const sections  = document.querySelectorAll('section[id]');
+    const navLinks  = document.querySelectorAll('.navbar__nav a');
+    const secObserve = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          navLinks.forEach(link => {
+            const active = link.getAttribute('href') === `#${entry.target.id}`;
+            link.style.color = active ? 'var(--navy)' : '';
+            link.style.fontWeight = active ? '800' : '';
+          });
+        }
+      });
+    }, { threshold: 0.45 });
+    sections.forEach(s => secObserve.observe(s));
+
+    // ── [DYNAMIC] Pre-fill instansi dari URL param ──
+    // Contoh URL: /proposal?instansi=PT%20Contoh%20Indonesia
+    const params = new URLSearchParams(window.location.search);
+    const instansiParam = params.get('instansi');
+    if (instansiParam) {
+      // Ganti placeholder di hero badge
+      const targetName = document.querySelector('.hero__target-badge strong');
+      if (targetName) targetName.textContent = instansiParam;
+      // Pre-fill form field
+      const fInstansi = document.getElementById('f-instansi');
+      if (fInstansi) fInstansi.value = instansiParam;
+    }
+
+    // ── [DYNAMIC] Form submit → WhatsApp redirect (contoh sederhana) ──
+    document.querySelector('button[type="button"]').addEventListener('click', () => {
+      const nama     = document.getElementById('f-nama').value.trim();
+      const jabatan  = document.getElementById('f-jabatan').value.trim();
+      const instansi = document.getElementById('f-instansi').value.trim();
+      const telepon  = document.getElementById('f-telepon').value.trim();
+      const layanan  = document.getElementById('f-layanan').value;
+      const pesan    = document.getElementById('f-pesan').value.trim();
+
+      if (!nama || !instansi || !telepon) {
+        alert('Mohon isi Nama, Instansi, dan No. Telepon terlebih dahulu.');
+        return;
+      }
+
+      // Buat pesan WhatsApp terformat
+      const msg = `*PERMINTAAN PROPOSAL — STAR Training & Consulting*\n\n`
+        + `👤 *Nama:* ${nama}\n`
+        + `🏢 *Instansi:* ${instansi}\n`
+        + `💼 *Jabatan:* ${jabatan || '-'}\n`
+        + `📞 *Kontak:* ${telepon}\n`
+        + `📋 *Layanan:* ${layanan || '-'}\n\n`
+        + `📝 *Kebutuhan:*\n${pesan || '-'}`;
+
+      const waUrl = `https://api.whatsapp.com/send/?phone=6281111158002&text=${encodeURIComponent(msg)}`;
+      window.open(waUrl, '_blank', 'noopener');
+    });
+  </script>
+
+</body>
+</html>

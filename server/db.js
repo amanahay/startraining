@@ -288,6 +288,48 @@ export function migrate() {
       updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
     );
 
+    CREATE TABLE IF NOT EXISTS consultation_pages (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      slug TEXT NOT NULL UNIQUE DEFAULT 'request-konsultasi',
+      eyebrow TEXT, title TEXT NOT NULL, subtitle TEXT, form_title TEXT, form_description TEXT,
+      name_label TEXT, whatsapp_label TEXT, company_label TEXT, message_label TEXT, submit_label TEXT,
+      background_color TEXT, label_color TEXT, title_color TEXT, description_color TEXT,
+      button_background_color TEXT, button_text_color TEXT, button_border_color TEXT,
+      label_font TEXT, title_font TEXT, description_font TEXT, button_font TEXT,
+      label_size INTEGER, title_size INTEGER, description_size INTEGER, button_size INTEGER,
+      meta_title TEXT, meta_description TEXT, meta_keywords TEXT,
+      is_published INTEGER NOT NULL DEFAULT 1, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+    CREATE TABLE IF NOT EXISTS client_pages (
+      id INTEGER PRIMARY KEY AUTOINCREMENT, slug TEXT NOT NULL UNIQUE DEFAULT 'klien', eyebrow TEXT, title TEXT NOT NULL, subtitle TEXT,
+      meta_title TEXT, meta_description TEXT, meta_keywords TEXT, is_published INTEGER NOT NULL DEFAULT 1, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+    CREATE TABLE IF NOT EXISTS events (
+      id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT NOT NULL, slug TEXT NOT NULL UNIQUE, description TEXT, content TEXT, image_url TEXT, location TEXT,
+      starts_at TEXT NOT NULL, ends_at TEXT NOT NULL, timezone TEXT NOT NULL DEFAULT 'Asia/Jakarta', reservation_enabled INTEGER NOT NULL DEFAULT 0,
+      reservation_label TEXT, is_featured INTEGER NOT NULL DEFAULT 0, is_published INTEGER NOT NULL DEFAULT 1, sort_order INTEGER NOT NULL DEFAULT 0,
+      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+    CREATE TABLE IF NOT EXISTS event_pages (
+      id INTEGER PRIMARY KEY AUTOINCREMENT, slug TEXT NOT NULL UNIQUE DEFAULT 'event', eyebrow TEXT, title TEXT NOT NULL, subtitle TEXT,
+      meta_title TEXT, meta_description TEXT, meta_keywords TEXT, is_published INTEGER NOT NULL DEFAULT 1, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+    CREATE TABLE IF NOT EXISTS proposal_pages (
+      id INTEGER PRIMARY KEY AUTOINCREMENT, slug TEXT NOT NULL UNIQUE DEFAULT 'proposal', eyebrow TEXT, title TEXT NOT NULL, subtitle TEXT,
+      package_eyebrow TEXT, package_title TEXT, package_subtitle TEXT, contact_title TEXT, contact_subtitle TEXT,
+      meta_title TEXT, meta_description TEXT, meta_keywords TEXT, is_published INTEGER NOT NULL DEFAULT 1, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+    CREATE TABLE IF NOT EXISTS proposals (
+      id INTEGER PRIMARY KEY AUTOINCREMENT, institution_name TEXT NOT NULL, contact_name TEXT, contact_whatsapp TEXT,
+      title TEXT, slug TEXT NOT NULL UNIQUE, hero_title TEXT, hero_subtitle TEXT, intro_content TEXT, valid_until TEXT,
+      is_published INTEGER NOT NULL DEFAULT 1, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+    CREATE TABLE IF NOT EXISTS proposal_packages (
+      id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT NOT NULL, description TEXT, price_label TEXT, features TEXT NOT NULL DEFAULT '[]',
+      button_label TEXT, is_featured INTEGER NOT NULL DEFAULT 0, is_published INTEGER NOT NULL DEFAULT 1, sort_order INTEGER NOT NULL DEFAULT 0,
+      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+
     CREATE TABLE IF NOT EXISTS social_proofs (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       customer_name TEXT NOT NULL,

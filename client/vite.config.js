@@ -18,10 +18,14 @@ export default defineConfig(({ mode }) => {
       emptyOutDir: true
     },
     server: {
-      port: 5173,
+      // Gunakan port non-standar agar tidak berbenturan dengan proyek Vite lain.
+      port: Number(env.VITE_PORT || 18473),
+      strictPort: true,
       proxy: {
         '/api': apiTarget,
-        '/uploads': apiTarget
+        '/uploads': apiTarget,
+        '/sitemap.xml': apiTarget,
+        '/robots.txt': apiTarget
       }
     }
   };

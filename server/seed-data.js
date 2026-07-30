@@ -74,10 +74,34 @@ const brightSectionStyle = (key, index) => ({
   }
 });
 
+// Default copy used by the landing page.  These values are stored in each
+// section's config_json, so an administrator can change them without a deploy.
+export const sectionConfigDefaults = {
+  events: { action_button_label: 'Lihat Semua Event', action_button_url: '/event' },
+  clients: { display_limit: 12, sort_mode: 'latest', action_button_label: 'Lihat Semua Klien', action_button_url: '/klien' },
+  stats: { about_button_label: 'Selengkapnya Tentang Kami', about_button_url: '/about' },
+  programs: { action_button_label: 'Lihat Semua Program', action_button_url: '/programs', filter_all_label: 'Semua', card_detail_label: 'Detail', card_inquiry_label: 'Tanya', card_flyer_label: 'Flyer', hero_detail_label: 'Detail Program', hero_inquiry_label: 'Tanya', hero_display_label: 'Tampilkan' },
+  features: { action_button_label: 'Konsultasi Gratis', action_button_url: '#kontak' },
+  trainers: { previous_label: 'Trainer sebelumnya', next_label: 'Trainer berikutnya' },
+  galleries: { action_button_label: 'Lihat Semua Foto', action_button_url: '/gallery' },
+  testimonials: { action_button_label: 'Lihat Semua Testimoni', action_button_url: '/testimonials' },
+  posts: { action_button_label: 'Semua Artikel', action_button_url: '/blog', read_more_label: 'Baca Selengkapnya' },
+  contact: {
+    form_title: 'Request Konsultasi', whatsapp_label: 'WhatsApp', phone_label: 'Telepon', email_label: 'Email', address_label: 'Head Office', show_whatsapp: 1, show_phone: 1, show_email: 1, show_address: 1,
+    name_label: 'Nama Lengkap *', whatsapp_field_label: 'No. WhatsApp *', company_label: 'Perusahaan / Instansi', position_label: 'Jabatan',
+    program_label: 'Kebutuhan Training', program_placeholder: 'Pilih program', participants_label: 'Jumlah Peserta', timeline_label: 'Estimasi Waktu',
+    message_label: 'Pesan Tambahan', submit_label: 'Kirim Request Konsultasi', submitting_label: 'Mengirim...',
+    participant_options: ['1–20 orang', '21–50 orang', '51–100 orang', '100+ orang'],
+    timeline_options: ['Bulan ini', '1–3 bulan ke depan', '3–6 bulan ke depan', 'Masih eksplorasi']
+  },
+  cta: { button_label: 'Hubungi Kami Sekarang' }
+};
+
 export const sections = [
   ['hero', 'Hero', 'Lembaga Pelatihan SDM Profesional', 'Kembangkan SDM Unggul Bersama STAR Training', 'Kami membantu perusahaan dan instansi pemerintahan di seluruh Indonesia meningkatkan kompetensi sumber daya manusia melalui pelatihan yang aplikatif dan terbukti mendorong kinerja.', '', { image_url: 'https://startraining.info/wp-content/uploads/2026/02/Compro-STAR-Training-2026-17.6-x-25-cm-721x1024.png', primary_button: 'Request Proposal', primary_url: '#kontak', secondary_button: 'Konsultasi Gratis', secondary_url: '#kontak' }, 1, 10],
   ['stats', 'Statistik', 'Kepercayaan Klien', 'Angka yang Bicara Sendiri', 'Lebih dari satu dekade STAR Training melayani perusahaan swasta, BUMN, dan instansi pemerintahan di seluruh Indonesia.', '', {}, 1, 20],
   ['clients', 'Logo Klien', '', 'Dipercaya oleh ratusan perusahaan & instansi', '', '', { display_mode: 'masonry', scroll_height: 240, sitelink_enabled: 1, sitelink_label: 'Klien Kami' }, 1, 30],
+  ['events', 'Event', 'Agenda Terbaru', 'Event & Kegiatan Mendatang', 'Ikuti agenda pelatihan, seminar, dan kegiatan terbaru kami.', '', {}, 1, 35],
   ['programs', 'Program', 'Program Kami', 'Solusi Pelatihan untuk Setiap Kebutuhan', 'Dari outbound seru hingga sertifikasi BNSP resmi — kami punya program yang tepat untuk tim Anda.', '', {}, 1, 40],
   ['features', 'Keunggulan', 'Keunggulan Kami', 'Mengapa Memilih STAR Training?', 'STAR Training & Consulting membantu perusahaan menghadapi tantangan dunia kerja lewat pelatihan yang aplikatif, interaktif, dan terbukti mendorong kinerja tim.', '', {}, 1, 50],
   ['trainers', 'Trainer', 'Tim Profesional', 'Trainer & Konsultan Kami', 'Dipimpin oleh para ahli bersertifikat dengan rekam jejak nyata di industri.', '', {}, 1, 60],
@@ -89,7 +113,7 @@ export const sections = [
   ['faqs', 'FAQ', 'FAQ', 'Pertanyaan yang Sering Ditanyakan', '', '', {}, 1, 120],
   ['cta', 'CTA', '', 'Ada pertanyaan? Konsultasi Gratis Sekarang!', 'Tim kami siap membantu menemukan solusi pelatihan terbaik untuk organisasi Anda.', '', { button_label: 'Chat via WhatsApp', button_url: '#kontak' }, 1, 130]
 ].map((item, index) => {
-  item[6] = { ...brightSectionStyle(item[0], index), ...(item[6] || {}), style: { ...brightSectionStyle(item[0], index).style, ...(item[6]?.style || {}) } };
+  item[6] = { ...brightSectionStyle(item[0], index), ...(sectionConfigDefaults[item[0]] || {}), ...(item[6] || {}), style: { ...brightSectionStyle(item[0], index).style, ...(item[6]?.style || {}) } };
   return item;
 });
 
@@ -255,6 +279,27 @@ export const programPage = {
   meta_description: 'Daftar lengkap program pelatihan STAR Training & Consulting, mulai dari outbound, motivation session, leadership, sertifikasi BNSP, hingga custom training.',
   meta_keywords: 'program pelatihan, training SDM, outbound, motivation session, leadership, sertifikasi BNSP, custom training'
 };
+
+export const consultationPage = {
+  slug: 'request-konsultasi', eyebrow: 'Konsultasi Gratis', title: 'Request Konsultasi Kebutuhan Pelatihan',
+  subtitle: 'Ceritakan kebutuhan organisasi Anda. Tim kami akan menghubungi untuk menyusun solusi pelatihan yang tepat.',
+  form_title: 'Form Request Konsultasi', form_description: 'Isi data singkat berikut, lalu tim kami akan menghubungi Anda.',
+  name_label: 'Nama Lengkap *', whatsapp_label: 'No. WhatsApp *', company_label: 'Perusahaan / Instansi', message_label: 'Kebutuhan atau pesan Anda', submit_label: 'Kirim Request Konsultasi',
+  background_color: '#fff8f1', label_color: '#9f1239', title_color: '#172033', description_color: '#475569',
+  button_background_color: '#c41e3a', button_text_color: '#ffffff', button_border_color: '#c41e3a',
+  label_font: 'Manrope', title_font: 'Manrope', description_font: 'Manrope', button_font: 'Manrope', label_size: 14, title_size: 44, description_size: 18, button_size: 16,
+  meta_title: 'Request Konsultasi Pelatihan | STAR Training & Consulting',
+  meta_description: 'Ajukan request konsultasi kebutuhan pelatihan, outbound, sertifikasi, leadership, atau program custom bersama STAR Training & Consulting.',
+  meta_keywords: 'request konsultasi pelatihan, konsultasi training SDM, training custom, outbound perusahaan'
+};
+export const clientPage = { slug: 'klien', eyebrow: 'Kepercayaan Klien', title: 'Klien & Mitra Kami', subtitle: 'Dipercaya oleh perusahaan, instansi, dan organisasi dari berbagai sektor di Indonesia.', meta_title: 'Klien & Mitra STAR Training | Pelatihan SDM Profesional', meta_description: 'Daftar klien dan mitra yang mempercayakan kebutuhan pelatihan dan pengembangan SDM kepada STAR Training & Consulting.', meta_keywords: 'klien STAR Training, mitra pelatihan SDM, perusahaan training' };
+export const eventPage = { slug: 'event', eyebrow: 'Agenda STAR Training', title: 'Event & Kegiatan Kami', subtitle: 'Informasi event yang akan datang, sedang berlangsung, dan telah diselenggarakan.', meta_title: 'Event STAR Training & Consulting', meta_description: 'Daftar event, seminar, pelatihan, dan kegiatan STAR Training & Consulting.', meta_keywords: 'event training, seminar SDM, kegiatan STAR Training' };
+export const proposalPage = { slug: 'proposal', eyebrow: 'Penawaran Khusus', title: 'Solusi Pelatihan untuk Organisasi Anda', subtitle: 'Penawaran dapat disesuaikan dengan kebutuhan, jumlah peserta, dan target organisasi.', package_eyebrow: 'Pilihan Paket', package_title: 'Pilih Paket yang Tepat', package_subtitle: 'Pilih paket awal atau hubungi kami untuk rancangan pelatihan yang lebih spesifik.', contact_title: 'Kontak Kami', contact_subtitle: 'Tinggalkan data Anda. Tim kami akan mencatat permintaan dan mengarahkan Anda ke WhatsApp admin.', meta_title: 'Penawaran Pelatihan | STAR Training & Consulting', meta_description: 'Penawaran program pelatihan yang dapat disesuaikan untuk kebutuhan organisasi.', meta_keywords: 'penawaran pelatihan, proposal training, training perusahaan' };
+export const proposalPackages = [
+  ['Paket Essential', 'Pilihan praktis untuk kebutuhan pelatihan dasar organisasi.', 'Mulai dari Rp 5.000.000', JSON.stringify(['Konsultasi kebutuhan', 'Materi dapat disesuaikan', 'Trainer profesional']), 'Pilih Paket', 0, 1, 10],
+  ['Paket Professional', 'Paket populer untuk program yang membutuhkan rancangan lebih lengkap.', 'Hubungi kami untuk penawaran', JSON.stringify(['Semua fasilitas Essential', 'Pre-assessment kebutuhan', 'Dokumentasi dan evaluasi']), 'Pilih Paket Ini', 1, 1, 20],
+  ['Paket Custom', 'Rancang solusi pelatihan yang sesuai dengan target organisasi Anda.', 'Harga menyesuaikan kebutuhan', JSON.stringify(['Rancangan program custom', 'Pilihan metode dan lokasi', 'Pendampingan tim konsultasi']), 'Diskusikan Paket', 0, 1, 30]
+];
 
 export const navigation = [
   ['Home', '/#hero', 10], ['Tentang', '/#tentang', 20], ['Program', '/#program', 30],

@@ -1,5 +1,19 @@
 <script setup>
+import { useRouter } from 'vue-router';
+
 defineProps({ settings: { type: Object, default: () => ({}) }, navigation: { type: Array, default: () => [] } });
+const router = useRouter();
+
+async function goToLandingSection(url) {
+  const sectionId = String(url).split('#')[1];
+  if (!sectionId) return;
+  if (router.currentRoute.value.path !== '/') await router.push('/');
+  requestAnimationFrame(() => {
+    const section = document.getElementById(sectionId);
+    history.pushState({ ...(history.state || {}), landingSection: sectionId, landingOffset: 0 }, '', '/');
+    if (section) window.scrollTo({ top: Math.max(0, section.getBoundingClientRect().top + window.scrollY - 72), behavior: 'smooth' });
+  });
+}
 </script>
 
 <template>
@@ -21,7 +35,7 @@ defineProps({ settings: { type: Object, default: () => ({}) }, navigation: { typ
         <div class="col-sm-6 col-lg-3">
           <div class="footer-heading">Navigasi</div>
           <ul class="footer-links">
-            <li v-for="item in navigation" :key="item.id"><router-link :to="item.url">{{ item.label }}</router-link></li>
+            <li v-for="item in navigation" :key="item.id"><a v-if="item.url.startsWith('/#')" href="/" @click.prevent="goToLandingSection(item.url)">{{ item.label }}</a><router-link v-else :to="item.url">{{ item.label }}</router-link></li>
           </ul>
         </div>
         <div class="col-sm-6 col-lg-4">
